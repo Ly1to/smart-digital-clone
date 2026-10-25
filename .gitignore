@@ -1,0 +1,28 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.venv/
+venv/
+.DS_Store
+*.log
+.playwright-mcp/
+screenshots/
+orbit-*.png
+
+# Local schedule database
+data/schedules.json
+data/schedules.json.*.tmp
+data/music-source.json
+data/music-source.json.*.tmp
+
+# Local API credentials
+.env
+.env.*
+!.env.example

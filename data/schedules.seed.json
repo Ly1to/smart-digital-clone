@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "sch-product-sync",
+      "type": "work",
+      "title": "产品策略同步",
+      "date": "2026-10-19",
+      "startTime": "09:30",
+      "durationMinutes": 45,
+      "deadline": "2026-10-19T18:00",
+      "description": "设计团队 · 6 人",
+      "status": "planned",
+      "featured": true
+    },
+    {
+      "id": "sch-inspiration-note",
+      "type": "personal",
+      "title": "灵感速记",
+      "date": "2026-10-19",
+      "startTime": "11:20",
+      "durationMinutes": 25,
+      "description": "个人空间",
+      "status": "planned"
+    },
+    {
+      "id": "sch-navigation-review",
+      "type": "work",
+      "title": "新版导航走查",
+      "date": "2026-10-20",
+      "startTime": "10:00",
+      "durationMinutes": 90,
+      "deadline": "2026-10-20T18:00",
+      "description": "Figma · 核心链路",
+      "status": "planned"
+    },
+    {
+      "id": "sch-user-interview",
+      "type": "work",
+      "title": "用户访谈",
+      "date": "2026-10-20",
+      "startTime": "15:00",
+      "durationMinutes": 40,
+      "description": "线上会议 · Emma",
+      "status": "planned"
+    },
+    {
+      "id": "sch-morning-focus",
+      "type": "work",
+      "title": "晨间深度专注",
+      "date": "2026-10-21",
+      "startTime": "09:00",
+      "durationMinutes": 50,
+      "description": "无打扰 · 目标撰写",
+      "status": "planned",
+      "featured": true
+    },
+    {
+      "id": "sch-motion-review",
+      "type": "work",
+      "title": "动效方案评审",
+      "date": "2026-10-21",
+      "startTime": "11:30",
+      "durationMinutes": 30,
+      "description": "Prototype v2.4",
+      "status": "planned"
+    },
+    {
+      "id": "sch-design-critique",
+      "type": "work",
+      "title": "设计批评会",
+      "date": "2026-10-21",
+      "startTime": "14:30",
+      "durationMinutes": 60,
+      "description": "Studio · 12 人",
+      "status": "planned"
+    },
+    {
+      "id": "sch-evening-run",
+      "type": "personal",
+      "title": "夜跑 · 滨江",
+      "date": "2026-10-21",
+      "startTime": "18:20",
+      "durationMinutes": 45,
+      "description": "Zone 2 · 6.2 km",
+      "status": "planned"
+    },
+    {
+      "id": "sch-cross-team-workshop",
+      "type": "work",
+      "title": "跨团队工作坊",
+      "date": "2026-10-22",
+      "startTime": "10:30",
+      "durationMinutes": 60,
+      "description": "Room 4A · 白板",
+      "status": "planned"
+    },
+    {
+      "id": "sch-weekly-report",
+      "type": "work",
+      "title": "周报整理",
+      "date": "2026-10-22",
+      "startTime": "16:00",
+      "durationMinutes": 30,
+      "deadline": "2026-10-23T17:00",
+      "description": "Notion · 本周进展",
+      "status": "planned"
+    },
+    {
+      "id": "sch-build-in-public",
+      "type": "work",
+      "title": "Build in public",
+      "date": "2026-10-23",
+      "startTime": "09:45",
+      "durationMinutes": 45,
+      "description": "内容创作 · Thread",
+      "status": "planned"
+    },
+    {
+      "id": "sch-prototype-focus",
+      "type": "work",
+      "title": "原型沉浸打磨",
+      "date": "2026-10-23",
+      "startTime": "13:30",
+      "durationMinutes": 90,
+      "description": "深度工作 · 勿扰",
+      "status": "planned",
+      "featured": true
+    },
+    {
+      "id": "sch-friends-dinner",
+      "type": "leisure",
+      "title": "朋友小聚",
+      "date": "2026-10-22",
+      "startTime": "18:30",
+      "durationMinutes": 90,
+      "description": "Bistro · 老地方",
+      "status": "planned"
+    },
+    {
+      "id": "sch-rooftop-records",
+      "type": "leisure",
+      "title": "屋顶唱片夜",
+      "date": "2026-10-23",
+      "startTime": "19:30",
+      "durationMinutes": 120,
+      "description": "与 Mia · 胶州路",
+      "status": "planned"
+    }
+  ]
+}
