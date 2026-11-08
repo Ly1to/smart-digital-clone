@@ -38,6 +38,7 @@ class Schedule(Base):
         Index("ix_schedules_end_at", "end_at"),
         Index("ix_schedules_category", "category"),
         Index("ix_schedules_status", "status"),
+        Index("ix_schedules_source", "source"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -68,6 +69,9 @@ class Schedule(Base):
         nullable=False,
         default=ScheduleStatus.pending,
     )
+    source: Mapped[str] = mapped_column(String(40), nullable=False, default="manual")
+    source_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )

@@ -1,6 +1,8 @@
+import secrets
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -24,6 +26,27 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+
+    github_username: str = ""
+    github_token: str | None = None
+    github_lookback_days: int = Field(default=14, ge=1, le=90)
+    github_api_url: str = "https://api.github.com"
+    github_auto_sync_minutes: int = Field(default=360, ge=0, le=1440)
+
+    gitee_username: str = ""
+    gitee_access_token: str | None = None
+    gitee_lookback_days: int = Field(default=14, ge=1, le=90)
+    gitee_api_url: str = "https://gitee.com/api/v5"
+    gitee_auto_sync_minutes: int = Field(default=360, ge=0, le=1440)
+
+    auto_schedule_duration_minutes: int = Field(default=30, ge=15, le=240)
+    auto_schedule_day_start_hour: int = Field(default=9, ge=0, le=23)
+    auto_schedule_day_end_hour: int = Field(default=22, ge=1, le=24)
+
+    jwt_secret: str = Field(default_factory=lambda: secrets.token_urlsafe(48))
+    access_token_expire_minutes: int = Field(default=7 * 24 * 60, ge=5, le=365 * 24 * 60)
+    auth_bootstrap_username: str = ""
+    auth_bootstrap_password: str = ""
 
 
 @lru_cache

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 test('移动端在今日议程中创建、编辑并删除日程', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-chromium', '仅在移动端项目中运行')

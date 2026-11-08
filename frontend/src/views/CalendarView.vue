@@ -14,10 +14,19 @@ import MoreFilters from '@/components/filters/MoreFilters.vue'
 import TodayAgenda from '@/components/agenda/TodayAgenda.vue'
 import ScheduleDetailPanel from '@/components/schedule/ScheduleDetailPanel.vue'
 import ScheduleForm from '@/components/schedule/ScheduleForm.vue'
+import StagingDrawer from '@/components/staging/StagingDrawer.vue'
+import AccountPanel from '@/components/settings/AccountPanel.vue'
+import ThemeSwitcher from '@/components/settings/ThemeSwitcher.vue'
 import LoadingState from '@/components/common/LoadingState.vue'
 import { useScheduleStore } from '@/stores/schedule'
 import { useMediaQuery } from '@/composables/useMediaQuery'
-import type { AppView, CalendarView, Schedule, ScheduleInput } from '@/types/schedule'
+import type {
+  AppView,
+  CalendarView,
+  Schedule,
+  ScheduleInput,
+  StagedSchedule,
+} from '@/types/schedule'
 import {
   allDayDate,
   formatDayTitle,
@@ -53,6 +62,12 @@ const submitError = ref('')
 const deleting = ref(false)
 
 const filterDrawerVisible = ref(false)
+const stagingDrawerVisible = ref(false)
+const stagedFormVisible = ref(false)
+const editingStaged = ref<StagedSchedule | null>(null)
+const stagedSubmitting = ref(false)
+const stagedError = ref('')
+const stagedFormDirty = ref(false)
 
 const activeView = computed<AppView>(() => (isMobile.value ? mobileView.value : calendarView.value))
 const showCalendar = computed(() => !isMobile.value || mobileView.value !== 'agenda')
@@ -88,6 +103,8 @@ watch(isDesktop, (desktop) => {
 
 onMounted(() => {
   void store.fetchDaySchedules(agendaDate.value)
+  void store.fetchStaging()
+  void store.fetchGithubStatus()
   document.addEventListener('keydown', handleShortcut)
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
@@ -375,6 +392,97 @@ function retryLoad() {
 function clearFilters() {
   void store.resetFilters(agendaDate.value)
 }
+
+function stagedAsSchedule(staged: StagedSchedule): Schedule {
+  const start = staged.start_at ?? dayjs().hour(9).minute(0).second(0).toISOString()
+  const end = staged.end_at ?? dayjs(start).add(30, 'minute').toISOString()
+  return {
+    id: staged.id,
+    title: staged.title,
+    category: staged.category,
+    description: staged.description,
+    start_at: start,
+    end_at: end,
+    all_day: staged.all_day,
+    location: staged.location,
+    status: 'pending',
+    source: staged.source,
+    source_ref: staged.source_ref,
+    source_url: staged.source_url,
+    created_at: staged.created_at,
+    updated_at: staged.updated_at,
+  }
+}
+
+function openStagedEdit(staged: StagedSchedule) {
+  editingStaged.value = staged
+  stagedError.value = ''
+  stagedFormDirty.value = false
+  stagedFormVisible.value = true
+}
+
+async function closeStagedEdit() {
+  if (stagedFormDirty.value) {
+    try {
+      await ElMessageBox.confirm('还有未保存的修改，确定关闭吗？', '放弃修改', {
+        confirmButtonText: '放弃修改',
+        cancelButtonText: '继续编辑',
+        type: 'warning',
+      })
+    } catch {
+      return
+    }
+  }
+  stagedFormVisible.value = false
+  stagedFormDirty.value = false
+  editingStaged.value = null
+  stagedError.value = ''
+}
+
+async function handleStagedBeforeClose(done: () => void) {
+  if (stagedFormDirty.value) {
+    try {
+      await ElMessageBox.confirm('还有未保存的修改，确定关闭吗？', '放弃修改', {
+        confirmButtonText: '放弃修改',
+        cancelButtonText: '继续编辑',
+        type: 'warning',
+      })
+    } catch {
+      return
+    }
+  }
+  editingStaged.value = null
+  stagedError.value = ''
+  stagedFormDirty.value = false
+  done()
+}
+
+async function handleStagedSave(payload: ScheduleInput) {
+  if (!editingStaged.value) {
+    return
+  }
+  stagedSubmitting.value = true
+  stagedError.value = ''
+  try {
+    await store.updateStaged(editingStaged.value.id, {
+      title: payload.title,
+      category: payload.category,
+      description: payload.description,
+      start_at: payload.start_at,
+      end_at: payload.end_at,
+      all_day: payload.all_day,
+      location: payload.location,
+    })
+    ElMessage.success('暂存日程已更新')
+    stagedFormDirty.value = false
+    stagedFormVisible.value = false
+    editingStaged.value = null
+  } catch (error) {
+    stagedError.value = getErrorMessage(error)
+  } finally {
+    stagedSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -387,12 +495,14 @@ function clearFilters() {
         :is-mobile="isMobile"
         :show-filter-button="!isDesktop"
         :filter-summary="store.activeFilterSummary"
+        :staging-count="store.pendingStagingCount"
         @prev="goPrev"
         @next="goNext"
         @today="goToday"
         @new="openCreate()"
         @change-view="changeView"
         @toggle-filters="filterDrawerVisible = true"
+        @toggle-staging="stagingDrawerVisible = true"
         @select-schedule="handleSearchSelect"
       />
     </template>
@@ -402,6 +512,8 @@ function clearFilters() {
         <MiniCalendar :current-date="currentDate" @select="handleMiniSelect" />
         <CategoryFilter :day-date="agendaDate" />
         <MoreFilters :day-date="agendaDate" />
+        <ThemeSwitcher />
+        <AccountPanel />
         <div v-if="store.hasActiveFilters" class="filter-summary">
           <span>{{ store.activeFilterSummary }}</span>
           <button type="button" @click="clearFilters">清除</button>
@@ -457,8 +569,11 @@ function clearFilters() {
           :date="agendaDate"
           :schedules="store.daySchedules"
           :loading="store.dayLoading"
+          :pending-count="store.pendingStagingCount"
+          show-staging-button
           @select="openDetail"
           @create="openCreate()"
+          @open-staging="stagingDrawerVisible = true"
         />
       </section>
     </div>
@@ -515,12 +630,36 @@ function clearFilters() {
     <div class="filter-drawer">
       <CategoryFilter :day-date="agendaDate" />
       <MoreFilters :day-date="agendaDate" />
+      <ThemeSwitcher />
+      <AccountPanel />
       <div v-if="store.hasActiveFilters" class="filter-summary">
         <span>{{ store.activeFilterSummary }}</span>
         <button type="button" @click="clearFilters">清除</button>
       </div>
     </div>
   </el-drawer>
+
+  <StagingDrawer v-model="stagingDrawerVisible" @edit="openStagedEdit" />
+
+  <el-dialog
+    v-model="stagedFormVisible"
+    title="调整暂存日程"
+    width="560px"
+    destroy-on-close
+    :before-close="handleStagedBeforeClose"
+  >
+    <ScheduleForm
+      v-if="editingStaged"
+      :key="editingStaged.id"
+      :initial="stagedAsSchedule(editingStaged)"
+      :submitting="stagedSubmitting"
+      :submit-error="stagedError"
+      submit-label="保存调整"
+      @submit="handleStagedSave"
+      @cancel="closeStagedEdit"
+      @dirty-change="stagedFormDirty = $event"
+    />
+  </el-dialog>
 
   <el-drawer
     v-if="!isDesktop"
@@ -657,6 +796,10 @@ function clearFilters() {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+:global(.el-drawer.staging-drawer .el-drawer__body) {
+  padding: 0;
 }
 
 .panel-form {

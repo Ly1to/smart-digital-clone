@@ -6,14 +6,15 @@ requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.16",
     "fastapi>=0.120",
+    "httpx>=0.28",
     "pydantic-settings>=2.12",
+    "pyjwt>=2.10",
     "sqlalchemy>=2.0.44",
     "uvicorn[standard]>=0.39",
 ]
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28",
     "pytest>=8.4",
     "pytest-asyncio>=1.2",
     "ruff>=0.14",

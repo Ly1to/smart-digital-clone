@@ -1,8 +1,8 @@
 # 个人日程系统
 
-单用户、免登录的个人日程 MVP。第一版完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选。
+单用户、需要登录的个人日程系统。完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选，并支持 GitHub 自动来源暂存区。
 
-当前进度：**后端、数据库与前端已完成**，待做部署与试用反馈。
+当前进度：**后端、数据库、登录与前端已完成**，待做部署与试用反馈。
 
 ## 目录
 
@@ -36,13 +36,19 @@ digital-clone/
 
 ## 功能
 
+- 首次使用创建唯一管理员账号，之后通过账号密码登录
+- JWT 登录状态保存于浏览器，所有日程、暂存区和自动来源接口均需登录
 - 桌面端默认周视图，支持日、周、月三种日历视图和前后切换
 - 点击空白日期或「新建日程」手动创建日程，自动带入对应日期和时间
 - 点击日程查看详情，支持编辑、删除确认和未保存修改提醒
 - 工作、外出、私人时间三类固定分类，颜色、中文文字和一字符标记共同区分
+- 三套低饱和主题色：青墨、苔绿、赭石，可切换并在本地记忆
 - 全天事件开关与独立日期选择，跨天和全天日程按首尾日期展示
 - 顶部搜索浮层支持 300ms 防抖、按日期分组结果，点击结果跳转并打开详情
 - 左侧小月历、分类计数、状态和日期范围组合筛选，支持一键清除
+- 自动来源暂存区：GitHub / Gitee 最近 14 天仓库更新先生成待确认日程
+- 暂存日程可调整、逐条插入、全部插入或丢弃，确认后才写入日历
+- 自动插入时按今天 09:00–22:00 的空闲时段依次分配
 - 加载骨架、局部加载、空数据、筛选无结果和错误重试状态
 - 桌面三栏布局、平板收起侧栏、移动端今日议程与底部抽屉
 - 键盘支持 `N` 新建、`T` 回到今天、`/` 搜索、`Esc` 关闭
@@ -50,6 +56,9 @@ digital-clone/
 ## 界面方向
 
 视觉基线见 [前端界面与样式设计要求](./docs/03-frontend-design-requirements.md)：暖纸背景、墨色文字、低饱和三分类色，日历是页面主角。
+
+- 主题色：青墨（默认）、苔绿、赭石，只改变界面强调色，不改变三类日程的固定分类色
+- 主题选择保存在浏览器本地，刷新后继续生效
 
 - 桌面端（≥1280px）：小月历与筛选、中央日历、右侧今日议程/详情/表单
 - 平板端（768–1279px）：收起侧栏，筛选使用抽屉，详情使用覆盖式面板
@@ -74,23 +83,72 @@ cd backend && uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 cd frontend && npm run dev
 ```
 
-打开 <http://127.0.0.1:5173>。Vite 会把 `/api` 代理到 `http://127.0.0.1:8000`，因此不需要额外配置 CORS。
+打开 <http://127.0.0.1:5173>。首次打开会进入「创建管理员账号」页面，设置用户名和密码后即可进入日历。Vite 会把 `/api` 代理到 `http://127.0.0.1:8000`，因此不需要额外配置 CORS。
 
 - Swagger 文档：<http://127.0.0.1:8000/docs>
 - 健康检查：<http://127.0.0.1:8000/api/health>
 
 默认数据库文件为仓库根目录下的 `data/schedules.db`。可通过环境变量 `DATABASE_URL` 覆盖，示例见 `backend/.env.example`。
 
+## 登录与账号
+
+- 首次使用在登录页创建唯一管理员账号，之后使用同一账号登录
+- 密码使用 scrypt 加盐哈希保存，登录后签发 JWT
+- 除 `/api/health` 和 `/api/auth/*` 外，所有 API 都要求 `Authorization: Bearer <token>`
+- 退出登录只清理浏览器 Token；JWT 有效期默认 7 天
+- 生产环境建议在 `backend/.env` 中固定 `JWT_SECRET`，否则进程重启后需要重新登录
+- 也可以通过 `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` 在首次启动时自动创建账号
+
+更完整的说明见 [登录与认证](./docs/05-authentication.md)。
+
+## 自动来源与暂存区
+
+自动来源采用“先暂存、再确认”的流程：
+
+```text
+GitHub / Gitee 最近 14 天仓库动态
+  -> 按仓库汇总为待确认日程
+  -> 分配今天 09:00–22:00 内的空闲时段
+  -> 在暂存区调整 / 插入 / 全部插入 / 丢弃
+  -> 确认后才写入 schedules
+```
+
+启用 GitHub / Gitee 同步：
+
+```bash
+cd backend
+cp .env.example .env
+# GitHub：填写 GITHUB_USERNAME；私有仓库再填写 GITHUB_TOKEN
+# Gitee：填写 GITEE_USERNAME；私有仓库再填写 GITEE_ACCESS_TOKEN
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+配置后在前端侧栏或移动端今日议程打开「暂存区」，选择对应来源点击「同步」即可；两个来源默认每 6 小时也会各自自动同步一次，设为 `0` 可关闭自动同步。Token 需要具备读取仓库的权限。当天没有足够空闲时间时，暂存条目会保留，稍后可再次插入。
+
 ## API
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/health` | 健康检查（含数据库连通性） |
+| GET | `/api/auth/status` | 是否已创建管理员账号 |
+| POST | `/api/auth/setup` | 首次创建管理员账号 |
+| POST | `/api/auth/login` | 登录并获取 JWT |
+| GET | `/api/auth/me` | 当前登录用户 |
+| POST | `/api/auth/logout` | 退出登录（客户端清除 Token） |
 | GET | `/api/schedules` | 列表查询，支持时间和条件筛选 |
 | GET | `/api/schedules/{id}` | 日程详情 |
 | POST | `/api/schedules` | 手动创建日程 |
 | PATCH | `/api/schedules/{id}` | 局部更新日程 |
 | DELETE | `/api/schedules/{id}` | 删除日程 |
+| GET | `/api/staging` | 待确认暂存日程 |
+| PATCH | `/api/staging/{id}` | 调整暂存日程 |
+| POST | `/api/staging/{id}/approve` | 插入单条暂存日程 |
+| POST | `/api/staging/{id}/reject` | 丢弃暂存日程 |
+| POST | `/api/staging/approve-all` | 全部插入今天空闲时间 |
+| GET | `/api/auto-sources/github/status` | GitHub 同步配置状态 |
+| POST | `/api/auto-sources/github/sync` | 同步最近 14 天 GitHub 仓库更新 |
+| GET | `/api/auto-sources/gitee/status` | Gitee 同步配置状态 |
+| POST | `/api/auto-sources/gitee/sync` | 同步最近 14 天 Gitee 仓库更新 |
 
 列表查询参数：
 
@@ -99,10 +157,15 @@ cd frontend && npm run dev
 - `statuses`：逗号分隔的状态，如 `pending,completed`
 - `keyword`：同时匹配标题和描述，`%`、`_` 按普通字符处理
 
-请求示例：
+请求示例（先登录获取 Token）：
 
 ```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"your-password"}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')
+
 curl -X POST http://127.0.0.1:8000/api/schedules \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{
     "title": "项目周会",
@@ -132,7 +195,7 @@ curl -X POST http://127.0.0.1:8000/api/schedules \
 | --- | --- |
 | `make test` | 后端 pytest + 前端 Vitest |
 | `make check` | Ruff、ESLint、Prettier、TypeScript 全部检查 |
-| `make e2e` | Playwright 桌面端、移动端和全天日程流程（自动启动前后端） |
+| `make e2e` | Playwright 登录、桌面、移动端、暂存区和全天日程流程（自动启动前后端） |
 | `make verify` | `check` + `test` + 前端生产构建，提交前执行 |
 | `make build` | 只构建前端生产静态文件 |
 

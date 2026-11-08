@@ -32,6 +32,15 @@ export default defineConfig({
       timeout: 120000,
       env: {
         DATABASE_URL: 'sqlite:////tmp/digital-clone-e2e.db',
+        GITHUB_USERNAME: '',
+        GITHUB_TOKEN: '',
+        GITHUB_AUTO_SYNC_MINUTES: '0',
+        GITEE_USERNAME: '',
+        GITEE_ACCESS_TOKEN: '',
+        GITEE_AUTO_SYNC_MINUTES: '0',
+        JWT_SECRET: 'e2e-jwt-secret-at-least-32-bytes-long',
+        AUTH_BOOTSTRAP_USERNAME: 'e2e-user',
+        AUTH_BOOTSTRAP_PASSWORD: 'e2e-password-123',
       },
     },
     {

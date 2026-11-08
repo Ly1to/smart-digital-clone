@@ -20,6 +20,16 @@ const emit = defineEmits<{
   delete: []
   close: []
 }>()
+
+function sourceLabel(source: string): string {
+  if (source === 'github') {
+    return 'GitHub'
+  }
+  if (source === 'gitee') {
+    return 'Gitee'
+  }
+  return source
+}
 </script>
 
 <template>
@@ -68,6 +78,21 @@ const emit = defineEmits<{
       <div v-if="schedule.location">
         <dt>地点</dt>
         <dd>{{ schedule.location }}</dd>
+      </div>
+      <div v-if="schedule.source && schedule.source !== 'manual'">
+        <dt>来源</dt>
+        <dd>
+          <a
+            v-if="schedule.source_url"
+            :href="schedule.source_url"
+            target="_blank"
+            rel="noreferrer"
+            class="detail-list__source"
+          >
+            {{ sourceLabel(schedule.source) }}
+          </a>
+          <span v-else>{{ sourceLabel(schedule.source) }}</span>
+        </dd>
       </div>
       <div v-if="schedule.description">
         <dt>描述</dt>
@@ -214,6 +239,15 @@ const emit = defineEmits<{
 
 .detail-list__description {
   white-space: pre-wrap;
+}
+
+.detail-list__source {
+  color: var(--color-focus);
+  text-decoration: none;
+}
+
+.detail-list__source:hover {
+  text-decoration: underline;
 }
 
 .detail-list__meta {

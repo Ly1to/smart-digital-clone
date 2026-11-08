@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowLeft, ArrowRight, Plus } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, Collection, Plus } from '@element-plus/icons-vue'
 
 import SearchPopover from '@/components/search/SearchPopover.vue'
 import { VIEW_LABELS } from '@/constants/schedule'
@@ -12,6 +12,7 @@ const props = defineProps<{
   isMobile: boolean
   showFilterButton: boolean
   filterSummary: string
+  stagingCount: number
 }>()
 
 const emit = defineEmits<{
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   new: []
   changeView: [view: AppView]
   toggleFilters: []
+  toggleStaging: []
   selectSchedule: [schedule: Schedule]
 }>()
 
@@ -75,6 +77,21 @@ defineExpose({ focusSearch })
     </div>
 
     <div class="top-bar__actions">
+      <button
+        v-if="!props.isMobile"
+        type="button"
+        class="staging-button"
+        aria-label="打开暂存区"
+        title="待确认日程暂存区"
+        @click="emit('toggleStaging')"
+      >
+        <el-icon><Collection /></el-icon>
+        <span>暂存</span>
+        <span v-if="props.stagingCount" class="staging-button__badge">
+          {{ props.stagingCount > 99 ? '99+' : props.stagingCount }}
+        </span>
+      </button>
+
       <SearchPopover ref="searchRef" @select="emit('selectSchedule', $event)" />
 
       <button
@@ -168,7 +185,8 @@ defineExpose({ focusSearch })
 .nav-button,
 .today-button,
 .view-button,
-.filter-button {
+.filter-button,
+.staging-button {
   min-height: 38px;
   padding: 0 11px;
   color: var(--color-ink-secondary);
@@ -183,6 +201,28 @@ defineExpose({ focusSearch })
     border-color 0.15s ease;
 }
 
+.staging-button {
+  position: relative;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.staging-button__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  color: var(--color-surface);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  background: var(--color-focus);
+  border-radius: 999px;
+}
+
 .nav-button {
   display: inline-flex;
   align-items: center;
@@ -195,7 +235,8 @@ defineExpose({ focusSearch })
 .nav-button:hover,
 .today-button:hover,
 .view-button:hover,
-.filter-button:hover {
+.filter-button:hover,
+.staging-button:hover {
   color: var(--color-ink);
   background: var(--color-surface);
   border-color: var(--color-line);
@@ -204,7 +245,8 @@ defineExpose({ focusSearch })
 .nav-button:focus-visible,
 .today-button:focus-visible,
 .view-button:focus-visible,
-.filter-button:focus-visible {
+.filter-button:focus-visible,
+.staging-button:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }

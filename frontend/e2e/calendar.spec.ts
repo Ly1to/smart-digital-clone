@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 test('桌面端创建、筛选、编辑并删除私人时间日程', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium', '仅在桌面项目中运行')

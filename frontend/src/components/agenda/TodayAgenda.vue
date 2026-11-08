@@ -12,15 +12,20 @@ const props = withDefaults(
     date: string
     schedules: Schedule[]
     loading?: boolean
+    pendingCount?: number
+    showStagingButton?: boolean
   }>(),
   {
     loading: false,
+    pendingCount: 0,
+    showStagingButton: false,
   },
 )
 
 const emit = defineEmits<{
   select: [schedule: Schedule]
   create: []
+  openStaging: []
 }>()
 
 const items = computed(() => [...props.schedules].sort(compareSchedules))
@@ -35,11 +40,21 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
         <p class="agenda__eyebrow">{{ isToday ? '今日安排' : '当天安排' }}</p>
         <h2>{{ formatDayTitle(props.date) }}</h2>
       </div>
-      <span class="agenda__count">
-        {{ props.loading ? '加载中' : `${items.length} 项` }}
-      </span>
+      <div class="agenda__meta">
+        <button
+          v-if="props.showStagingButton"
+          type="button"
+          class="agenda__staging"
+          @click="emit('openStaging')"
+        >
+          暂存
+          <span v-if="props.pendingCount">{{ props.pendingCount }}</span>
+        </button>
+        <span class="agenda__count">
+          {{ props.loading ? '加载中' : `${items.length} 项` }}
+        </span>
+      </div>
     </header>
-
     <div v-if="props.loading" class="agenda__loading">
       <span v-for="index in 3" :key="index" class="agenda__skeleton"></span>
     </div>
@@ -131,6 +146,45 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
   color: var(--color-ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+}
+
+.agenda__meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.agenda__staging {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--color-focus);
+  font-size: 11px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.agenda__staging span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  color: var(--color-surface);
+  font-size: 9px;
+  background: var(--color-focus);
+  border-radius: 999px;
+}
+
+.agenda__staging:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .agenda__loading {

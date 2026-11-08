@@ -17,6 +17,14 @@ class ScheduleStatus(StrEnum):
     cancelled = "cancelled"
 
 
+class StagedStatus(StrEnum):
+    """自动来源暂存日程的确认状态。"""
+
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
 CATEGORY_LABELS: dict[ScheduleCategory, str] = {
     ScheduleCategory.work: "工作",
     ScheduleCategory.outing: "外出",

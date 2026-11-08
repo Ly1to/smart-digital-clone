@@ -1,14 +1,31 @@
+from __future__ import annotations
+
+import asyncio
+import logging
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import health, schedules
+from app.api.routes import auth, auto_sources, health, schedules, staging
 from app.core.config import settings
-from app.services.exceptions import ScheduleNotFoundError, ScheduleTimeRangeError
+from app.db.session import SessionLocal
+from app.services import auth_service, gitee_service, github_service
+from app.services.exceptions import (
+    GithubApiError,
+    GithubConfigurationError,
+    NoFreeSlotError,
+    ScheduleNotFoundError,
+    ScheduleTimeRangeError,
+    StagedScheduleNotFoundError,
+    StagedScheduleStateError,
+    StagedScheduleTimeError,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def _format_validation_errors(exc: RequestValidationError) -> str:
@@ -24,14 +41,40 @@ def _format_validation_errors(exc: RequestValidationError) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # 表结构由 Alembic 管理，应用启动时不自动建表。
+    if settings.auth_bootstrap_username and settings.auth_bootstrap_password:
+        with SessionLocal() as db:
+            if auth_service.count_users(db) == 0:
+                try:
+                    auth_service.create_user(
+                        db,
+                        settings.auth_bootstrap_username,
+                        settings.auth_bootstrap_password,
+                    )
+                    logger.info("已创建初始管理员账号：%s", settings.auth_bootstrap_username)
+                except ValueError as exc:
+                    logger.warning("创建初始管理员账号失败：%s", exc)
+
+    auto_sync_tasks: list[asyncio.Task] = []
+    if (
+        settings.github_username or settings.github_token
+    ) and settings.github_auto_sync_minutes > 0:
+        auto_sync_tasks.append(asyncio.create_task(github_service.auto_sync_loop()))
+    if (settings.gitee_username) and settings.gitee_auto_sync_minutes > 0:
+        auto_sync_tasks.append(asyncio.create_task(gitee_service.auto_sync_loop()))
+
     yield
+
+    for task in auto_sync_tasks:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version="0.1.0",
-        description="单用户、免登录的个人日程系统 API。",
+        description="单用户、需要登录的个人日程系统 API。",
         lifespan=lifespan,
     )
 
@@ -44,7 +87,11 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router, prefix=settings.api_prefix)
+    app.include_router(auth.router, prefix=settings.api_prefix)
     app.include_router(schedules.router, prefix=settings.api_prefix)
+    app.include_router(staging.router, prefix=settings.api_prefix)
+    app.include_router(auto_sources.router, prefix=settings.api_prefix)
+    app.include_router(auto_sources.gitee_router, prefix=settings.api_prefix)
 
     @app.get("/", include_in_schema=False)
     def root() -> dict[str, str]:
@@ -68,6 +115,34 @@ def create_app() -> FastAPI:
     @app.exception_handler(ScheduleTimeRangeError)
     async def time_range_handler(request: Request, exc: ScheduleTimeRangeError) -> JSONResponse:
         return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(StagedScheduleNotFoundError)
+    async def staged_not_found_handler(
+        request: Request, exc: StagedScheduleNotFoundError
+    ) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"detail": str(exc)})
+
+    @app.exception_handler(StagedScheduleStateError)
+    async def staged_state_handler(request: Request, exc: StagedScheduleStateError) -> JSONResponse:
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+    @app.exception_handler(StagedScheduleTimeError)
+    async def staged_time_handler(request: Request, exc: StagedScheduleTimeError) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(NoFreeSlotError)
+    async def no_free_slot_handler(request: Request, exc: NoFreeSlotError) -> JSONResponse:
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+    @app.exception_handler(GithubConfigurationError)
+    async def github_config_handler(
+        request: Request, exc: GithubConfigurationError
+    ) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(GithubApiError)
+    async def github_api_handler(request: Request, exc: GithubApiError) -> JSONResponse:
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
 
     return app
 

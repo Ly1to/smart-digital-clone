@@ -75,6 +75,9 @@ class ScheduleRead(BaseModel):
     all_day: bool
     location: str | None
     status: ScheduleStatus
+    source: str = "manual"
+    source_ref: str | None = None
+    source_url: str | None = None
     created_at: datetime
     updated_at: datetime
 

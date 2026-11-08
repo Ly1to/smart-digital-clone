@@ -3,8 +3,9 @@ import { createPinia, setActivePinia } from 'pinia'
 import dayjs from 'dayjs'
 
 import * as scheduleApi from '@/api/schedules'
+import * as stagingApi from '@/api/staging'
 import { createDefaultFilters, useScheduleStore } from '@/stores/schedule'
-import type { Schedule } from '@/types/schedule'
+import type { Schedule, StagedSchedule } from '@/types/schedule'
 
 vi.mock('@/api/schedules', () => ({
   fetchSchedules: vi.fn(),
@@ -14,10 +15,27 @@ vi.mock('@/api/schedules', () => ({
   deleteSchedule: vi.fn(),
 }))
 
+vi.mock('@/api/staging', () => ({
+  fetchStagedSchedules: vi.fn(),
+  updateStagedSchedule: vi.fn(),
+  approveStagedSchedule: vi.fn(),
+  rejectStagedSchedule: vi.fn(),
+  approveAllStagedSchedules: vi.fn(),
+  fetchGithubStatus: vi.fn(),
+  syncGithub: vi.fn(),
+  fetchGiteeStatus: vi.fn(),
+  syncGitee: vi.fn(),
+}))
+
 const fetchMock = vi.mocked(scheduleApi.fetchSchedules)
 const createMock = vi.mocked(scheduleApi.createSchedule)
 const updateMock = vi.mocked(scheduleApi.updateSchedule)
 const deleteMock = vi.mocked(scheduleApi.deleteSchedule)
+const fetchStagedMock = vi.mocked(stagingApi.fetchStagedSchedules)
+const syncGithubMock = vi.mocked(stagingApi.syncGithub)
+const syncGiteeMock = vi.mocked(stagingApi.syncGitee)
+const approveStagedMock = vi.mocked(stagingApi.approveStagedSchedule)
+const rejectStagedMock = vi.mocked(stagingApi.rejectStagedSchedule)
 
 function makeSchedule(overrides: Partial<Schedule> = {}): Schedule {
   return {
@@ -36,11 +54,35 @@ function makeSchedule(overrides: Partial<Schedule> = {}): Schedule {
   }
 }
 
+function makeStaged(overrides: Partial<StagedSchedule> = {}): StagedSchedule {
+  return {
+    id: 11,
+    source: 'github',
+    source_ref: 'github:octo/demo:abc123',
+    source_url: 'https://github.com/octo/demo',
+    source_meta: { repo: 'octo/demo' },
+    title: 'GitHub 更新：octo/demo',
+    category: 'work',
+    description: '2 次提交',
+    start_at: '2026-11-08T02:00:00Z',
+    end_at: '2026-11-08T02:30:00Z',
+    all_day: false,
+    location: null,
+    status: 'pending',
+    schedule_id: null,
+    created_at: '2026-11-08T01:00:00Z',
+    updated_at: '2026-11-08T01:00:00Z',
+    approved_at: null,
+    ...overrides,
+  }
+}
+
 describe('schedule store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     fetchMock.mockResolvedValue([])
+    fetchStagedMock.mockResolvedValue([])
   })
 
   it('starts with every category and status selected', () => {
@@ -268,5 +310,92 @@ describe('schedule store', () => {
 
     expect(store.categoryCounts).toEqual({ work: 2, outing: 0, private: 1 })
     expect(store.activeFilterSummary).toBe('工作、私人时间 · 待进行')
+  })
+
+  it('loads staged schedules and counts pending items', async () => {
+    const store = useScheduleStore()
+    fetchStagedMock.mockResolvedValue([makeStaged(), makeStaged({ id: 12, status: 'approved' })])
+
+    await store.fetchStaging()
+
+    expect(store.stagedSchedules).toHaveLength(2)
+    expect(store.pendingStagingCount).toBe(1)
+    expect(store.stagingLoading).toBe(false)
+    expect(store.stagingError).toBe('')
+  })
+
+  it('syncs GitHub and reloads the staging area', async () => {
+    const store = useScheduleStore()
+    const staged = makeStaged()
+    syncGithubMock.mockResolvedValue({
+      configured: true,
+      scanned_events: 4,
+      created: 1,
+      updated: 0,
+      skipped: 0,
+      no_slot: 0,
+      message: '已扫描 4 条 GitHub 动态：新增 1 条，更新 0 条',
+    })
+    fetchStagedMock.mockResolvedValue([staged])
+
+    const result = await store.syncGithub()
+
+    expect(result.created).toBe(1)
+    expect(syncGithubMock).toHaveBeenCalledTimes(1)
+    expect(store.stagedSchedules).toEqual([staged])
+    expect(store.syncingGithub).toBe(false)
+  })
+
+  it('syncs Gitee and reloads the staging area', async () => {
+    const store = useScheduleStore()
+    syncGiteeMock.mockResolvedValue({
+      configured: true,
+      scanned_events: 2,
+      created: 1,
+      updated: 0,
+      skipped: 0,
+      no_slot: 0,
+      message: '已扫描 2 条 Gitee 动态：新增 1 条，更新 0 条',
+    })
+    fetchStagedMock.mockResolvedValue([])
+
+    const result = await store.syncGitee()
+
+    expect(result.created).toBe(1)
+    expect(syncGiteeMock).toHaveBeenCalledTimes(1)
+    expect(store.syncingGitee).toBe(false)
+  })
+
+  it('approves a staged schedule and refreshes the calendar', async () => {
+    const store = useScheduleStore()
+    const staged = makeStaged()
+    const schedule = makeSchedule({ id: 7, title: staged.title, source: 'github' })
+    approveStagedMock.mockResolvedValue({ staged: { ...staged, status: 'approved' }, schedule })
+    fetchStagedMock.mockResolvedValue([])
+
+    const result = await store.approveStaged(staged.id, '2026-11-08')
+
+    expect(result.schedule).toEqual(schedule)
+    expect(approveStagedMock).toHaveBeenCalledWith(staged.id)
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(store.revision).toBe(1)
+    expect(store.stagedSchedules).toEqual([])
+  })
+
+  it('rejects and updates staged schedules', async () => {
+    const store = useScheduleStore()
+    const staged = makeStaged()
+    rejectStagedMock.mockResolvedValue({ ...staged, status: 'rejected' })
+    vi.mocked(stagingApi.updateStagedSchedule).mockResolvedValue({
+      ...staged,
+      title: '改过的标题',
+    })
+
+    await store.rejectStaged(staged.id)
+    const updated = await store.updateStaged(staged.id, { title: '改过的标题' })
+
+    expect(rejectStagedMock).toHaveBeenCalledWith(staged.id)
+    expect(updated.title).toBe('改过的标题')
+    expect(fetchStagedMock).toHaveBeenCalledTimes(2)
   })
 })

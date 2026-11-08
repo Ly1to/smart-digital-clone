@@ -6,13 +6,18 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.core.time import to_utc
 from app.db.session import get_db
 from app.models.enums import ScheduleCategory, ScheduleStatus
 from app.schemas.schedule import ScheduleCreate, ScheduleRead, ScheduleUpdate
 from app.services import schedule_service
 
-router = APIRouter(prefix="/schedules", tags=["schedules"])
+router = APIRouter(
+    prefix="/schedules",
+    tags=["schedules"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 
