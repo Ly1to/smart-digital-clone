@@ -1,8 +1,9 @@
 import secrets
 from functools import lru_cache
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+    app_timezone: str = "Asia/Shanghai"
 
     github_username: str = ""
     github_token: str | None = None
@@ -48,6 +50,18 @@ class Settings(BaseSettings):
     auth_bootstrap_username: str = ""
     auth_bootstrap_password: str = ""
     allow_registration: bool = True
+
+    @field_validator("app_timezone")
+    @classmethod
+    def _validate_app_timezone(cls, value: str) -> str:
+        name = value.strip()
+        if not name:
+            raise ValueError("APP_TIMEZONE 不能为空")
+        try:
+            ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(f"无效的时区名称：{name}") from exc
+        return name
 
 
 @lru_cache

@@ -6,7 +6,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      TZ: ${TZ:-Asia/Shanghai}
+      TZ: ${APP_TIMEZONE:-Asia/Shanghai}
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Shanghai}
       DATABASE_URL: sqlite:////app/data/schedules.db
       JWT_SECRET: ${JWT_SECRET:?请在项目根目录 .env 中设置 JWT_SECRET}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}

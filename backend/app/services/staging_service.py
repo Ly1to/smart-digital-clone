@@ -5,6 +5,7 @@ from datetime import UTC, datetime, time, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import time as core_time
 from app.core.time import normalize_all_day, to_utc, utc_now
 from app.models.enums import ScheduleCategory, ScheduleStatus, StagedStatus
 from app.models.schedule import Schedule
@@ -21,11 +22,12 @@ from app.services.sync_lock import synchronized
 
 
 def local_now() -> datetime:
-    return datetime.now().astimezone()
+    """当前时间；保留此包装以便测试替换。"""
+    return core_time.local_now()
 
 
 def _day_bounds(now: datetime, start_hour: int, end_hour: int) -> tuple[datetime, datetime]:
-    local = now.astimezone()
+    local = now.astimezone(core_time.app_timezone())
     day_start = datetime.combine(local.date(), time(start_hour), tzinfo=local.tzinfo)
     if end_hour >= 24:
         day_end = datetime.combine(local.date() + timedelta(days=1), time(0), tzinfo=local.tzinfo)
@@ -149,8 +151,9 @@ def _all_day_interval(staged: StagedSchedule, now: datetime) -> TimeInterval:
     if staged.start_at is not None and staged.end_at is not None:
         start, end = normalize_all_day(staged.start_at, staged.end_at)
         return TimeInterval(start, end)
-    anchor = datetime.combine(now.date(), time.min, tzinfo=UTC)
-    return TimeInterval(anchor, datetime.combine(now.date(), time.max, tzinfo=UTC))
+    local_date = now.astimezone(core_time.app_timezone()).date()
+    anchor = datetime.combine(local_date, time.min, tzinfo=UTC)
+    return TimeInterval(anchor, datetime.combine(local_date, time.max, tzinfo=UTC))
 
 
 def list_staged(

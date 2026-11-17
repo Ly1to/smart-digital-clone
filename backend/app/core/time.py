@@ -1,6 +1,21 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, time
+from functools import lru_cache
+from zoneinfo import ZoneInfo
+
+from app.core.config import settings
+
+
+@lru_cache
+def app_timezone() -> ZoneInfo:
+    """应用时区，由 APP_TIMEZONE 配置，用于自动排程的日期边界。"""
+    return ZoneInfo(settings.app_timezone)
+
+
+def local_now() -> datetime:
+    """当前时间，带应用时区，不依赖容器或宿主机 TZ 环境变量。"""
+    return datetime.now(app_timezone())
 
 
 def utc_now() -> datetime:

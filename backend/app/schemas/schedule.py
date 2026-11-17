@@ -94,3 +94,4 @@ class ScheduleRead(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     database: str
+    timezone: str
