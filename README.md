@@ -1,15 +1,21 @@
 # 个人日程系统
 
-单用户、需要登录的个人日程系统。完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选，并支持 GitHub 自动来源暂存区。
+支持多账号、需要登录的个人日程系统。每个账号拥有独立的日程和暂存区，可完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选，并支持 GitHub 自动来源暂存区。
 
-当前进度：**后端、数据库、登录与前端已完成**，待做部署与试用反馈。
+当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，待一周试用反馈。
 
 ## 目录
 
 ```text
 digital-clone/
-  Makefile            # 常用开发、测试、构建命令
+  Makefile            # 常用开发、测试、构建、部署命令
+  docker-compose.yml  # 生产/试用环境的 Compose 编排
+  .env.example        # Docker Compose 环境变量示例
+  scripts/
+    backup-db.sh      # SQLite 在线备份脚本
   backend/
+    Dockerfile
+    docker-entrypoint.sh
     app/
       api/routes/     # health、schedules 路由
       core/           # 配置与时间工具
@@ -20,11 +26,14 @@ digital-clone/
     alembic/          # 数据库迁移
     tests/            # pytest API 测试
   frontend/
+    Dockerfile
+    nginx.conf        # 静态文件与 /api 反向代理
     src/
       api/            # Axios 封装与日程接口
       components/     # 日历、筛选、日程表单与详情
       constants/      # 分类/状态标签与颜色
       stores/         # Pinia 日程与筛选状态
+      styles/         # Tailwind 入口、设计 Token 与第三方组件覆盖
       types/          # TypeScript 类型
       utils/          # 日期与表单转换
       views/          # 日历主页
@@ -36,7 +45,7 @@ digital-clone/
 
 ## 功能
 
-- 首次使用创建唯一管理员账号，之后通过账号密码登录
+- 首次部署创建管理员账号，之后可在注册页创建更多账号；每个账号的数据相互隔离
 - JWT 登录状态保存于浏览器，所有日程、暂存区和自动来源接口均需登录
 - 桌面端默认周视图，支持日、周、月三种日历视图和前后切换
 - 点击空白日期或「新建日程」手动创建日程，自动带入对应日期和时间
@@ -59,6 +68,7 @@ digital-clone/
 
 - 主题色：青墨（默认）、苔绿、赭石，只改变界面强调色，不改变三类日程的固定分类色
 - 主题选择保存在浏览器本地，刷新后继续生效
+- 样式使用 Tailwind CSS 工具类，设计 Token 集中在 `frontend/src/styles/main.css`
 
 - 桌面端（≥1280px）：小月历与筛选、中央日历、右侧今日议程/详情/表单
 - 平板端（768–1279px）：收起侧栏，筛选使用抽屉，详情使用覆盖式面板
@@ -90,14 +100,88 @@ cd frontend && npm run dev
 
 默认数据库文件为仓库根目录下的 `data/schedules.db`。可通过环境变量 `DATABASE_URL` 覆盖，示例见 `backend/.env.example`。
 
+## Docker 部署
+
+需要 Docker Engine 和 Docker Compose 插件，适用于生产或完整试用环境。
+
+```bash
+cp .env.example .env
+# 编辑 .env，至少填写 JWT_SECRET：
+# openssl rand -base64 48
+make docker-up
+```
+
+打开 <http://127.0.0.1:8080>（端口由 `.env` 中的 `APP_PORT` 控制）。首次访问仍会进入「创建管理员账号」页面，也可以在 `.env` 中配置 `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` 自动创建。
+
+部署结构：
+
+```text
+浏览器 :8080
+  |
+  v
+web (Nginx)
+  |-- /      -> Vue 静态文件 /usr/share/nginx/html
+  |-- /api/  -> backend:8000
+                  |
+                  v
+              SQLite /app/data/schedules.db
+                  |
+                  v
+              Docker 卷 digital-clone_schedules-data
+```
+
+相关文件：
+
+- `backend/Dockerfile`：uv 多阶段构建，启动时自动执行 `alembic upgrade head`，以非 root 用户运行
+- `frontend/Dockerfile`：Node 构建静态文件，Nginx 提供服务
+- `frontend/nginx.conf`：SPA 路由回退、静态资源缓存、`/api` 反向代理和基础安全响应头
+- `docker-compose.yml`：编排、健康检查、日志轮转和 SQLite 持久化卷
+- `scripts/backup-db.sh`：使用 SQLite 在线备份 API 生成一致性备份
+
+常用命令：
+
+| 命令 | 作用 |
+| --- | --- |
+| `make docker-up` | 构建并后台启动全部服务 |
+| `make docker-down` | 停止并移除容器（保留数据库卷） |
+| `make docker-logs` | 持续查看容器日志 |
+| `make docker-ps` | 查看容器与健康状态 |
+| `make backup` | 备份数据库到 `backups/schedules-<时间>.db` |
+
+环境变量：
+
+| 变量 | 必填 | 说明 |
+| --- | --- | --- |
+| `JWT_SECRET` | 是 | JWT 签名密钥，至少 32 字节；未设置时 Compose 会拒绝启动 |
+| `APP_PORT` | 否 | 宿主机端口，默认 `8080` |
+| `TZ` | 否 | 后端本地时区，默认 `Asia/Shanghai`，影响自动日程时间窗口 |
+| `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` | 否 | 首次启动自动创建管理员 |
+| `ALLOW_REGISTRATION` | 否 | 是否开放注册，默认 `true` |
+| `GITHUB_*` / `GITEE_*` | 否 | 自动来源同步配置，含义与 `backend/.env.example` 一致 |
+
+注意：
+
+- `docker compose down` 不会删除数据库；`docker compose down -v` 会连同数据卷一起删除
+- 后端容器启动时会自动迁移数据库，不需要手动执行 `make migrate`
+- Nginx 默认只提供 HTTP，公网部署建议在宿主机、云负载均衡或前置代理上终止 HTTPS，再转发到 `APP_PORT`
+- 恢复备份时先 `make docker-down`，再执行：
+
+```bash
+docker compose run --rm -v "$PWD/backups:/backup:ro" --entrypoint sh backend -c \
+  'cp /backup/schedules-YYYYMMDD-HHMMSS.db /app/data/schedules.db'
+make docker-up
+```
+
 ## 登录与账号
 
-- 首次使用在登录页创建唯一管理员账号，之后使用同一账号登录
+- 首次部署在登录页创建管理员账号，之后可在登录页进入注册页创建更多账号
+- 每个账号只能访问自己的日程和暂存区
 - 密码使用 scrypt 加盐哈希保存，登录后签发 JWT
 - 除 `/api/health` 和 `/api/auth/*` 外，所有 API 都要求 `Authorization: Bearer <token>`
 - 退出登录只清理浏览器 Token；JWT 有效期默认 7 天
-- 生产环境建议在 `backend/.env` 中固定 `JWT_SECRET`，否则进程重启后需要重新登录
-- 也可以通过 `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` 在首次启动时自动创建账号
+- 本地开发建议在 `backend/.env` 中固定 `JWT_SECRET`；Docker 部署必须在根目录 `.env` 中固定，否则进程重启后需要重新登录
+- 也可以通过 `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` 在首次启动时自动创建管理员账号
+- 通过 `ALLOW_REGISTRATION=false` 可以关闭注册入口；关闭后注册接口返回 403
 
 更完整的说明见 [登录与认证](./docs/05-authentication.md)。
 
@@ -125,6 +209,8 @@ uv run uvicorn app.main:app --reload --port 8000
 
 配置后在前端侧栏或移动端今日议程打开「暂存区」，选择对应来源点击「同步」即可；两个来源默认每 6 小时也会各自自动同步一次，设为 `0` 可关闭自动同步。Token 需要具备读取仓库的权限。当天没有足够空闲时间时，暂存条目会保留，稍后可再次插入。
 
+后台自动同步归属于第一个创建的管理员账号；其他账号手动点击同步时，暂存条目会写入自己的暂存区，不会看到彼此的日程。
+
 ## API
 
 | 方法 | 路径 | 说明 |
@@ -132,6 +218,7 @@ uv run uvicorn app.main:app --reload --port 8000
 | GET | `/api/health` | 健康检查（含数据库连通性） |
 | GET | `/api/auth/status` | 是否已创建管理员账号 |
 | POST | `/api/auth/setup` | 首次创建管理员账号 |
+| POST | `/api/auth/register` | 注册新账号（可通过环境变量关闭） |
 | POST | `/api/auth/login` | 登录并获取 JWT |
 | GET | `/api/auth/me` | 当前登录用户 |
 | POST | `/api/auth/logout` | 退出登录（客户端清除 Token） |
@@ -198,6 +285,8 @@ curl -X POST http://127.0.0.1:8000/api/schedules \
 | `make e2e` | Playwright 登录、桌面、移动端、暂存区和全天日程流程（自动启动前后端） |
 | `make verify` | `check` + `test` + 前端生产构建，提交前执行 |
 | `make build` | 只构建前端生产静态文件 |
+| `make docker-up` | 构建并启动 Docker Compose 服务 |
+| `make backup` | 在线备份 Docker 中的 SQLite 数据库 |
 
 `make e2e` 首次运行会自动安装 Chromium。运行 `make help` 可查看全部命令。
 
@@ -218,4 +307,4 @@ uv run alembic check
 
 ## 下一步
 
-按 `docs/02-tech-stack.md` 的部署方案补充 Docker Compose + Nginx，把静态前端、FastAPI 和 SQLite 持久化卷串起来，并完成一周试用验证。
+完成一周实际试用并收集反馈。公网部署时再按实际入口补充 HTTPS、访问保护和定期备份任务。

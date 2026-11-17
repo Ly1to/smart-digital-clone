@@ -6,6 +6,8 @@
 > 文档状态：第一版技术栈已确认  
 > 更新日期：2026-11-04
 
+> 实现说明（2026-11-14）：当前版本已增加 JWT 登录、多账号注册、用户数据隔离、Tailwind CSS 和自动来源，本文档保留技术选型基线。
+
 ## 1. 决策原则
 
 第一版技术栈以 `01-product-scope.md` 已确认的范围为准。开发手册提供总体技术方向，但当两份文档存在差异时，第一版执行以下已收敛决策：
@@ -36,6 +38,7 @@
 | 路由 | Vue Router 4 | 管理应用页面路由 |
 | 状态管理 | Pinia | 日程列表、筛选条件等共享状态 |
 | UI 组件 | Element Plus | 表单、按钮、弹窗、日期选择和消息提示 |
+| 样式系统 | Tailwind CSS | 工具类布局、颜色、间距和响应式 |
 | 日历组件 | FullCalendar Vue 3 | 日、周、月视图及日程展示 |
 | 日期处理 | Day.js | 本地时间、UTC 转换和日期格式化 |
 | HTTP 客户端 | Axios | 前端调用 FastAPI 接口 |
@@ -101,7 +104,17 @@ Element Plus 用于：
 
 分类颜色同时通过日期区块样式和文字标识呈现，不能只依赖颜色区分，以免展示不清晰或无法识别。
 
-### 3.5 FullCalendar
+### 3.5 Tailwind CSS
+
+组件布局和视觉样式使用 Tailwind CSS 4 工具类，通过 `@tailwindcss/vite` 接入 Vite。
+
+- `frontend/src/styles/main.css` 使用 `@theme` 定义纸张背景、墨色文字、分类色、状态色、阴影和字体 Token
+- 页面与组件模板直接使用工具类，不再维护组件级 `<style scoped>`
+- 主题切换通过 `:root[data-theme]` 覆盖 `--color-focus` 和 Element Plus 主色变量，Tailwind 工具类自动读取新值
+- 分类和状态相关的动态类名集中在 `src/constants/schedule.ts`，避免在组件中重复硬编码
+- Element Plus 和 FullCalendar 直接渲染第三方 DOM，保留少量全局 CSS 覆盖其内部结构；业务组件本身不依赖自定义 CSS 类
+
+### 3.6 FullCalendar
 
 使用 FullCalendar 的开源 Vue 3 组件和以下插件：
 
@@ -207,7 +220,13 @@ DELETE /api/schedules/{id}
 
 ```text
 digital-clone/
+  docker-compose.yml
+  .env.example
+  scripts/
+    backup-db.sh
   backend/
+    Dockerfile
+    docker-entrypoint.sh
     pyproject.toml
     uv.lock
     alembic.ini
@@ -221,6 +240,8 @@ digital-clone/
       services/
     tests/
   frontend/
+    Dockerfile
+    nginx.conf
     package.json
     package-lock.json
     src/
@@ -233,8 +254,6 @@ digital-clone/
     tests/
   docs/
   data/
-  Dockerfile
-  docker-compose.yml
 ```
 
 目录边界：
@@ -295,24 +314,43 @@ digital-clone/
 ```text
 浏览器
   |
-Nginx
+Nginx (frontend 容器)
   |-- /      -> Vue 静态文件
-  |-- /api   -> FastAPI
+  |-- /api   -> FastAPI (backend 容器)
                   |
                 SQLite
                   |
-              持久化卷
+              Docker 持久化卷
 ```
 
-部署要求：
+已落地的文件：
 
-- Docker Compose 启动前端静态服务和后端服务
-- SQLite 数据目录挂载持久化卷
-- Alembic 在容器启动或发布步骤中执行迁移
-- `/api/health` 用作健康检查
-- 记录应用日志和异常信息
-- 定期备份 SQLite 文件
-- 如需公网访问，在 Nginx、VPN 或 Tunnel 层增加访问保护
+- `backend/Dockerfile`：基于 uv 的多阶段构建，启动时执行 `alembic upgrade head`，以非 root 用户运行 Uvicorn 单进程
+- `frontend/Dockerfile`：Node 构建静态文件，Nginx 提供服务和 `/api` 反向代理
+- `frontend/nginx.conf`：SPA history 回退、`/assets/` 长缓存、`index.html` 不缓存、代理转发头、基础安全响应头和 gzip
+- `docker-compose.yml`：`backend` 与 `web` 两个服务，SQLite 挂载命名卷，配置健康检查、启动依赖和日志轮转
+- `.env.example`：Compose 使用的环境变量模板；生产环境至少设置 `JWT_SECRET`
+- `scripts/backup-db.sh`：通过 SQLite 在线备份 API 备份到 `backups/`
+
+部署命令：
+
+```bash
+cp .env.example .env
+# 编辑 .env，填写 JWT_SECRET
+make docker-up
+```
+
+访问 `http://<host>:<APP_PORT>`，默认端口 `8080`。
+
+部署要求对应关系：
+
+- Docker Compose 启动前端静态服务和后端服务：`docker-compose.yml`
+- SQLite 数据目录挂载持久化卷：`schedules-data:/app/data`，容器内路径 `/app/data/schedules.db`
+- Alembic 在容器启动时执行迁移：`backend/docker-entrypoint.sh`
+- `/api/health` 用作健康检查：后端容器 healthcheck，Nginx 通过 `/api/` 反代
+- 记录应用日志和异常信息：Uvicorn 输出到容器 stdout/stderr，Compose 配置 json-file 日志轮转
+- 定期备份 SQLite 文件：`make backup`，备份文件位于 `backups/`
+- 如需公网访问，在 Nginx、VPN 或 Tunnel 层增加访问保护：Nginx 默认只监听 HTTP，HTTPS 由前置代理或云负载均衡终止
 
 MVP 不需要 HTTPS 证书配置以外的应用认证。公网部署的访问保护由部署层提供，不属于产品功能。
 

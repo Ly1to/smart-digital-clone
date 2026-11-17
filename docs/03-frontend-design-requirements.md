@@ -7,6 +7,8 @@
 > 文档状态：第一版设计基线  
 > 更新日期：2026-11-04
 
+> 实现说明（2026-11-14）：当前版本已增加登录页、注册页、Tailwind CSS 和自动来源入口，本文档保留视觉与交互基线。
+
 ## 1. 文档目的
 
 本文档定义个人日程系统第一版的前端界面结构、视觉样式、交互方式和验收要求，作为 Vue 页面、组件、FullCalendar 主题和响应式实现的统一依据。
@@ -639,7 +641,9 @@ DeleteConfirmDialog
 - 分类颜色和名称集中定义，不在多个组件重复硬编码
 - API 类型与界面展示类型分开
 - FullCalendar 事件转换集中在适配层
-- Element Plus 样式通过 CSS Token 统一覆盖
+- 组件样式使用 Tailwind CSS 工具类，不维护组件级 scoped CSS
+- 颜色、字体、阴影等设计 Token 通过 `@theme` 集中定义
+- Element Plus 和 FullCalendar 的第三方 DOM 使用少量全局 CSS 覆盖
 - 组件不直接拼接接口 URL
 
 ## 22. 第一版界面不包含

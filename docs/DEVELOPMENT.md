@@ -59,6 +59,7 @@
 | 前端框架 | Vue 3、Vite、TypeScript |
 | 路由与状态 | Vue Router、Pinia |
 | UI 组件 | Element Plus 或 Naive UI |
+| 样式系统 | Tailwind CSS |
 | 日历组件 | FullCalendar |
 | 后端框架 | FastAPI |
 | ORM | SQLAlchemy |
@@ -200,29 +201,31 @@ AND status = pending
 
 ## 10. 部署与运维
 
-推荐部署结构：
+当前部署结构：
 
 ```text
 浏览器
   |
-Nginx 或云平台反向代理
-  |
-Vue 静态文件 + FastAPI
-  |
-PostgreSQL
-  |
-定时任务进程
+Nginx（frontend 容器）
+  |-- /      -> Vue 静态文件
+  |-- /api   -> FastAPI（backend 容器）
+                  |
+                SQLite
+                  |
+              Docker 命名卷
 ```
 
-部署时需要完成：
+部署已落地：
 
-- Docker Compose 一键启动
-- Alembic 数据库迁移
-- 环境变量管理，例如数据库密码和 JWT 密钥
-- HTTPS
-- 数据库备份
-- 日志记录
-- 健康检查接口
+- Docker Compose 一键启动：`make docker-up`，配置文件为根目录 `docker-compose.yml`
+- Alembic 数据库迁移：`backend/docker-entrypoint.sh` 在容器启动时执行 `alembic upgrade head`
+- 环境变量管理：复制根目录 `.env.example` 为 `.env`，至少设置 `JWT_SECRET`
+- 健康检查：后端 `/api/health`，Nginx `/healthz`，Compose 已配置 healthcheck
+- 日志记录：Uvicorn 输出到容器日志，Compose 限制单文件 10 MB、保留 3 个文件
+- 数据库备份：`make backup`，使用 SQLite 在线备份 API 写入 `backups/`
+- HTTPS：默认由宿主机、云负载均衡或前置代理终止，再转发到 `APP_PORT`；如需在 Nginx 内终止，可挂载证书后扩展 `frontend/nginx.conf`
+
+完整命令、环境变量和恢复步骤见 [README 的 Docker 部署章节](../README.md#docker-部署)。
 
 ## 11. 后续增强功能
 
