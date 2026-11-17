@@ -1,0 +1,77 @@
+name: digital-clone
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      DATABASE_URL: sqlite:////app/data/schedules.db
+      JWT_SECRET: ${JWT_SECRET:?请在项目根目录 .env 中设置 JWT_SECRET}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+
+      AUTH_BOOTSTRAP_USERNAME: ${AUTH_BOOTSTRAP_USERNAME:-}
+      AUTH_BOOTSTRAP_PASSWORD: ${AUTH_BOOTSTRAP_PASSWORD:-}
+
+      GITHUB_USERNAME: ${GITHUB_USERNAME:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_LOOKBACK_DAYS: ${GITHUB_LOOKBACK_DAYS:-14}
+      GITHUB_API_URL: ${GITHUB_API_URL:-https://api.github.com}
+      GITHUB_AUTO_SYNC_MINUTES: ${GITHUB_AUTO_SYNC_MINUTES:-360}
+
+      GITEE_USERNAME: ${GITEE_USERNAME:-}
+      GITEE_ACCESS_TOKEN: ${GITEE_ACCESS_TOKEN:-}
+      GITEE_LOOKBACK_DAYS: ${GITEE_LOOKBACK_DAYS:-14}
+      GITEE_API_URL: ${GITEE_API_URL:-https://gitee.com/api/v5}
+      GITEE_AUTO_SYNC_MINUTES: ${GITEE_AUTO_SYNC_MINUTES:-360}
+
+      AUTO_SCHEDULE_DURATION_MINUTES: ${AUTO_SCHEDULE_DURATION_MINUTES:-30}
+      AUTO_SCHEDULE_DAY_START_HOUR: ${AUTO_SCHEDULE_DAY_START_HOUR:-9}
+      AUTO_SCHEDULE_DAY_END_HOUR: ${AUTO_SCHEDULE_DAY_END_HOUR:-22}
+    volumes:
+      - schedules-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  schedules-data:

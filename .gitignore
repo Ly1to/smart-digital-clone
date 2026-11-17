@@ -13,6 +13,9 @@ data/*.db
 data/*.db-*
 data/*.sqlite3
 
+# 部署备份
+backups/
+
 # 前端（后续）
 node_modules/
 dist/

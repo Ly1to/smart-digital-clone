@@ -2,7 +2,8 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 .PHONY: help setup migrate test test-backend test-frontend check check-backend \
-	check-frontend build e2e verify
+	check-frontend build e2e verify docker-build docker-up docker-down \
+	docker-logs docker-ps backup
 
 help: ## 显示可用命令
 	@echo "个人日程系统常用命令："
@@ -13,6 +14,11 @@ help: ## 显示可用命令
 	@echo "  make e2e      运行 Playwright 端到端测试（自动启动前后端）"
 	@echo "  make verify   运行 check + test + 前端生产构建"
 	@echo "  make build    构建前端生产静态文件"
+	@echo "  make docker-up     构建并启动 Docker Compose 服务"
+	@echo "  make docker-down   停止并移除容器（保留数据库卷）"
+	@echo "  make docker-logs   查看容器日志"
+	@echo "  make docker-ps     查看容器状态"
+	@echo "  make backup        在线备份 SQLite 数据库到 backups/"
 
 setup: ## 安装开发依赖
 	cd backend && uv sync --group dev
@@ -46,3 +52,21 @@ e2e: ## Playwright 端到端测试（首次运行会安装 Chromium）
 	cd frontend && npm run test:e2e
 
 verify: check test build ## 发布前完整校验
+
+docker-build: ## 构建 Docker 镜像
+	docker compose build
+
+docker-up: ## 构建并启动 Docker Compose 服务
+	docker compose up -d --build
+
+docker-down: ## 停止并移除容器（保留数据卷）
+	docker compose down
+
+docker-logs: ## 查看容器日志
+	docker compose logs -f --tail=100
+
+docker-ps: ## 查看容器状态
+	docker compose ps
+
+backup: ## 在线备份 SQLite 数据库
+	./scripts/backup-db.sh
