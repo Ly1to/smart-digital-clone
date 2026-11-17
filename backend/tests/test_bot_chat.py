@@ -142,6 +142,7 @@ def test_bot_status_reports_configuration(client, monkeypatch) -> None:
         "provider": "deepseek",
         "model": "deepseek-chat",
         "qq_enabled": False,
+        "qq_connected": False,
     }
 
 

@@ -16,6 +16,7 @@ from app.bot.exceptions import (
     BotResponseError,
     BotUpstreamError,
 )
+from app.bot.onebot import run_qq_bot
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.services import auth_service, gitee_service, github_service
@@ -59,17 +60,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 except ValueError as exc:
                     logger.warning("创建初始管理员账号失败：%s", exc)
 
-    auto_sync_tasks: list[asyncio.Task] = []
+    background_tasks: list[asyncio.Task] = []
     if (
         settings.github_username or settings.github_token
     ) and settings.github_auto_sync_minutes > 0:
-        auto_sync_tasks.append(asyncio.create_task(github_service.auto_sync_loop()))
+        background_tasks.append(asyncio.create_task(github_service.auto_sync_loop()))
     if (settings.gitee_username) and settings.gitee_auto_sync_minutes > 0:
-        auto_sync_tasks.append(asyncio.create_task(gitee_service.auto_sync_loop()))
+        background_tasks.append(asyncio.create_task(gitee_service.auto_sync_loop()))
+    if settings.qq_bot_enabled:
+        background_tasks.append(asyncio.create_task(run_qq_bot()))
 
     yield
 
-    for task in auto_sync_tasks:
+    for task in background_tasks:
         task.cancel()
         with suppress(asyncio.CancelledError):
             await task

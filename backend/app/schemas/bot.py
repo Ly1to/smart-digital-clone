@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+
+from app.core.time import serialize_utc
 
 
 class BotChatRequest(BaseModel):
@@ -32,3 +36,27 @@ class BotStatusResponse(BaseModel):
     provider: str
     model: str
     qq_enabled: bool
+    qq_connected: bool = False
+
+
+class BindCodeResponse(BaseModel):
+    code: str
+    expires_at: datetime
+    expires_in_seconds: int
+
+    @field_serializer("expires_at")
+    def serialize_expires_at(self, value: datetime) -> str:
+        return serialize_utc(value) or ""
+
+
+class QqBindingRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    platform: str
+    external_id: str
+    created_at: datetime
+
+    @field_serializer("created_at")
+    def serialize_created_at(self, value: datetime) -> str:
+        return serialize_utc(value) or ""

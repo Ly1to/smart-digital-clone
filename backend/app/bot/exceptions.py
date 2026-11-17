@@ -13,3 +13,8 @@ class BotUpstreamError(BotError):
 
 class BotResponseError(BotError):
     """模型返回了无法处理的内容。"""
+
+
+class QQAlreadyBoundError(ValueError):
+    def __init__(self, message: str = "该 QQ 已绑定其他账号") -> None:
+        super().__init__(message)

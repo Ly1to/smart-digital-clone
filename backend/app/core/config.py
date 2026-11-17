@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     bot_llm_timeout_seconds: float = Field(default=30.0, ge=5, le=120)
     bot_history_turns: int = Field(default=6, ge=0, le=20)
     bot_max_tool_rounds: int = Field(default=4, ge=1, le=8)
+    onebot_ws_url: str = ""
+    onebot_access_token: str = ""
+    qq_bot_allowed_users: str = ""
+    qq_bot_allowed_groups: str = ""
+    qq_bot_reply_chunk_size: int = Field(default=1200, ge=200, le=4000)
+    qq_bind_code_ttl_seconds: int = Field(default=600, ge=60, le=3600)
 
     @field_validator("app_timezone")
     @classmethod
