@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { DEFAULT_THEME, THEMES, isThemeId } from '@/constants/theme'
-import { initTheme, setTheme, useTheme } from '@/composables/useTheme'
+import {
+  initTheme,
+  readStoredTheme,
+  setTheme,
+  THEME_VERSION,
+  useTheme,
+} from '@/composables/useTheme'
 
 describe('theme', () => {
   beforeEach(() => {
@@ -24,7 +30,22 @@ describe('theme', () => {
 
     expect(document.documentElement.dataset.theme).toBe('moss')
     expect(window.localStorage.getItem('digital-clone-theme')).toBe('moss')
+    expect(window.localStorage.getItem('digital-clone-theme-version')).toBe(THEME_VERSION)
     expect(useTheme().theme.value).toBe('moss')
+  })
+
+  it('resets a legacy stored theme without a version to the new default', () => {
+    window.localStorage.setItem('digital-clone-theme', 'teal')
+    window.localStorage.removeItem('digital-clone-theme-version')
+
+    expect(readStoredTheme()).toBe(DEFAULT_THEME)
+    expect(DEFAULT_THEME).toBe('ochre')
+  })
+
+  it('keeps a versioned theme selection', () => {
+    setTheme('moss')
+
+    expect(readStoredTheme()).toBe('moss')
   })
 
   it('validates known theme ids', () => {
