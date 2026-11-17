@@ -10,7 +10,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import auth, auto_sources, health, schedules, staging
+from app.api.routes import auth, auto_sources, bot, health, schedules, staging
+from app.bot.exceptions import (
+    BotNotConfiguredError,
+    BotResponseError,
+    BotUpstreamError,
+)
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.services import auth_service, gitee_service, github_service
@@ -92,6 +97,7 @@ def create_app() -> FastAPI:
     app.include_router(staging.router, prefix=settings.api_prefix)
     app.include_router(auto_sources.router, prefix=settings.api_prefix)
     app.include_router(auto_sources.gitee_router, prefix=settings.api_prefix)
+    app.include_router(bot.router, prefix=settings.api_prefix)
 
     @app.get("/", include_in_schema=False)
     def root() -> dict[str, str]:
@@ -142,6 +148,20 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(GithubApiError)
     async def github_api_handler(request: Request, exc: GithubApiError) -> JSONResponse:
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+    @app.exception_handler(BotNotConfiguredError)
+    async def bot_not_configured_handler(
+        request: Request, exc: BotNotConfiguredError
+    ) -> JSONResponse:
+        return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+    @app.exception_handler(BotUpstreamError)
+    async def bot_upstream_handler(request: Request, exc: BotUpstreamError) -> JSONResponse:
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+    @app.exception_handler(BotResponseError)
+    async def bot_response_handler(request: Request, exc: BotResponseError) -> JSONResponse:
         return JSONResponse(status_code=502, content={"detail": str(exc)})
 
     return app

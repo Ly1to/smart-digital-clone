@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     auth_bootstrap_password: str = ""
     allow_registration: bool = True
 
+    # 对话机器人：Phase 1 只提供 /api/bot/chat 调试接口，QQ 接入在后续阶段启用。
+    qq_bot_enabled: bool = False
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+    bot_llm_timeout_seconds: float = Field(default=30.0, ge=5, le=120)
+    bot_history_turns: int = Field(default=6, ge=0, le=20)
+    bot_max_tool_rounds: int = Field(default=4, ge=1, le=8)
+
     @field_validator("app_timezone")
     @classmethod
     def _validate_app_timezone(cls, value: str) -> str:
