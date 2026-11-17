@@ -95,27 +95,46 @@ function toggleMode() {
 </script>
 
 <template>
-  <main class="auth-page">
-    <section class="auth-card" aria-labelledby="auth-title">
-      <div class="auth-brand">
-        <span class="auth-seal" aria-hidden="true">日</span>
-        <div>
-          <strong>个人日程</strong>
-          <span>单用户 · 私有日历</span>
+  <main
+    class="auth-page grid min-h-dvh place-items-center bg-canvas bg-[radial-gradient(circle_at_12%_10%,rgb(47_111_136/8%),transparent_28rem),radial-gradient(circle_at_92%_88%,rgb(138_90_68/7%),transparent_24rem)] px-4 py-7 max-md:items-start max-md:px-2.5 max-md:pt-[8vh]"
+  >
+    <section
+      class="auth-card w-[min(430px,100%)] rounded-2xl border border-line bg-surface px-[26px] pb-[18px] pt-6 shadow-card max-md:rounded-[13px] max-md:px-[18px] max-md:pb-3.5 max-md:pt-5"
+      aria-labelledby="auth-title"
+    >
+      <div class="auth-brand mb-6 flex items-center gap-2.5">
+        <span
+          class="auth-seal inline-flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-focus font-display text-lg text-surface"
+          aria-hidden="true"
+        >
+          日
+        </span>
+        <div class="flex flex-col gap-px">
+          <strong class="text-[13px] tracking-[0.04em] text-ink">个人日程</strong>
+          <span class="text-[11px] text-ink-muted">单用户 · 私有日历</span>
         </div>
       </div>
 
-      <div v-if="statusLoading" class="auth-loading" role="status">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div v-if="statusLoading" class="auth-loading flex flex-col gap-2.5 py-5" role="status">
+        <span
+          v-for="index in 3"
+          :key="index"
+          class="h-[38px] animate-pulse rounded-lg bg-canvas"
+        ></span>
       </div>
 
       <template v-else>
         <div class="auth-heading">
-          <p class="auth-eyebrow">{{ isSetup ? '首次使用' : '欢迎回来' }}</p>
-          <h1 id="auth-title">{{ isSetup ? '创建管理员账号' : '登录你的日程' }}</h1>
-          <p class="auth-description">
+          <p class="auth-eyebrow mb-1 text-[11px] tracking-[0.12em] text-ink-muted">
+            {{ isSetup ? '首次使用' : '欢迎回来' }}
+          </p>
+          <h1
+            id="auth-title"
+            class="m-0 font-display text-[27px] font-semibold leading-[1.3] text-ink max-md:text-[23px]"
+          >
+            {{ isSetup ? '创建管理员账号' : '登录你的日程' }}
+          </h1>
+          <p class="auth-description mb-[18px] mt-2 text-xs leading-[1.7] text-ink-secondary">
             {{
               isSetup
                 ? '系统只创建一个管理员账号，用于保护日程和自动来源数据。'
@@ -130,7 +149,7 @@ function toggleMode() {
           type="error"
           :closable="false"
           show-icon
-          class="auth-error"
+          class="mb-3.5"
         />
 
         <el-form label-position="top" class="auth-form" @submit.prevent="submit">
@@ -172,26 +191,35 @@ function toggleMode() {
             />
           </el-form-item>
 
-          <el-button type="primary" class="auth-submit" :loading="auth.loading" @click="submit">
+          <el-button
+            type="primary"
+            class="mt-0.5 min-h-[42px]! w-full"
+            :loading="auth.loading"
+            @click="submit"
+          >
             {{ isSetup ? '创建并进入' : '登录' }}
           </el-button>
         </el-form>
 
-        <div class="auth-footer">
-          <button type="button" class="auth-link" @click="toggleMode">
+        <div class="auth-footer mt-4 flex flex-col items-start gap-1.5">
+          <button
+            type="button"
+            class="auth-link cursor-pointer border-0 bg-transparent p-0 text-xs text-focus hover:underline"
+            @click="toggleMode"
+          >
             {{ isSetup ? '已有账号，去登录' : '首次使用？创建管理员账号' }}
           </button>
           <RouterLink
             v-if="registrationEnabled && !isSetup"
             :to="{ name: 'register', query: route.query }"
-            class="auth-link"
+            class="text-xs text-focus hover:underline"
           >
             没有账号？创建一个
           </RouterLink>
           <button
             v-if="!isSetup"
             type="button"
-            class="auth-link auth-link--muted"
+            class="auth-link auth-link--muted cursor-pointer border-0 bg-transparent p-0 text-xs text-ink-muted hover:underline"
             @click="loadStatus"
           >
             重新检查登录状态
@@ -199,192 +227,11 @@ function toggleMode() {
         </div>
       </template>
 
-      <p class="auth-note">账号仅保存在当前部署的数据库中。</p>
+      <p
+        class="auth-note mt-[18px] border-t border-dashed border-line pt-3.5 text-[10px] text-ink-muted"
+      >
+        账号仅保存在当前部署的数据库中。
+      </p>
     </section>
   </main>
 </template>
-
-<style scoped>
-.auth-page {
-  display: grid;
-  min-height: 100dvh;
-  padding: 28px 16px;
-  place-items: center;
-  background:
-    radial-gradient(circle at 12% 10%, rgb(47 111 136 / 8%), transparent 28rem),
-    radial-gradient(circle at 92% 88%, rgb(138 90 68 / 7%), transparent 24rem), var(--color-canvas);
-}
-
-.auth-card {
-  width: min(430px, 100%);
-  padding: 24px 26px 18px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 16px;
-  box-shadow: 0 18px 50px rgb(55 46 35 / 10%);
-}
-
-.auth-brand {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.auth-seal {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  color: var(--color-surface);
-  font-family: var(--font-display);
-  font-size: 18px;
-  background: var(--color-focus);
-  border-radius: 11px;
-}
-
-.auth-brand div {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.auth-brand strong {
-  color: var(--color-ink);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
-
-.auth-brand span:last-child {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-}
-
-.auth-eyebrow {
-  margin: 0 0 4px;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-}
-
-.auth-heading h1 {
-  margin: 0;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 27px;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.auth-description {
-  margin: 8px 0 18px;
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.auth-error {
-  margin-bottom: 14px;
-}
-
-.auth-form :deep(.el-form-item) {
-  margin-bottom: 15px;
-}
-
-.auth-form :deep(.el-form-item__label) {
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-}
-
-.auth-submit {
-  width: 100%;
-  min-height: 42px;
-  margin-top: 2px;
-}
-
-.auth-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-start;
-  margin-top: 16px;
-}
-
-.auth-link {
-  padding: 0;
-  color: var(--color-focus);
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.auth-link--muted {
-  color: var(--color-ink-muted);
-}
-
-.auth-link:hover {
-  text-decoration: underline;
-}
-
-.auth-link:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.auth-note {
-  padding-top: 14px;
-  margin: 18px 0 0;
-  color: var(--color-ink-muted);
-  font-size: 10px;
-  border-top: 1px dashed var(--color-line);
-}
-
-.auth-loading {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 20px 0;
-}
-
-.auth-loading span {
-  height: 38px;
-  background: var(--color-canvas);
-  border-radius: 8px;
-  animation: auth-pulse 1.3s ease-in-out infinite;
-}
-
-@keyframes auth-pulse {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-loading span {
-    animation: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .auth-page {
-    padding: 14px 10px;
-    align-items: start;
-    padding-top: 8vh;
-  }
-
-  .auth-card {
-    padding: 20px 18px 14px;
-    border-radius: 13px;
-  }
-
-  .auth-heading h1 {
-    font-size: 23px;
-  }
-}
-</style>

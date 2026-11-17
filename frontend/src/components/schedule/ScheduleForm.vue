@@ -162,7 +162,7 @@ async function handleSubmit() {
     :model="form"
     :rules="rules"
     label-position="top"
-    class="schedule-form"
+    class="schedule-form pb-2 pt-1"
     @submit.prevent="handleSubmit"
   >
     <el-alert
@@ -171,7 +171,7 @@ async function handleSubmit() {
       type="error"
       show-icon
       :closable="false"
-      class="schedule-form__banner"
+      class="mb-4"
     />
 
     <el-form-item label="标题" prop="title">
@@ -185,32 +185,29 @@ async function handleSubmit() {
     </el-form-item>
 
     <el-form-item label="分类" prop="category">
-      <div class="category-cards" role="radiogroup" aria-label="日程分类">
+      <div
+        class="category-cards flex w-full gap-2 max-md:flex-col"
+        role="radiogroup"
+        aria-label="日程分类"
+      >
         <button
           v-for="category in ALL_CATEGORIES"
           :key="category"
           type="button"
           role="radio"
-          class="category-card"
-          :class="{ 'is-active': form.category === category }"
-          :aria-checked="form.category === category"
-          :style="
+          class="category-card flex min-h-[46px] flex-1 cursor-pointer items-center justify-center gap-[7px] rounded-[9px] border px-2 py-1.5 text-[13px] transition-colors hover:border-line-strong max-md:min-h-12 max-md:justify-start"
+          :class="[
             form.category === category
-              ? {
-                  color: CATEGORY_META[category].color,
-                  borderColor: CATEGORY_META[category].color,
-                  backgroundColor: CATEGORY_META[category].softColor,
-                }
-              : undefined
-          "
+              ? `font-medium ${CATEGORY_META[category].activeCardClass}`
+              : 'border-line bg-surface text-ink-secondary',
+            { 'is-active': form.category === category },
+          ]"
+          :aria-checked="form.category === category"
           @click="selectCategory(category)"
         >
           <span
-            class="category-card__mark"
-            :style="{
-              color: CATEGORY_META[category].color,
-              backgroundColor: CATEGORY_META[category].softColor,
-            }"
+            class="category-card__mark inline-flex h-5 w-5 items-center justify-center rounded-[5px] text-[10px] font-semibold"
+            :class="CATEGORY_META[category].badgeClass"
             aria-hidden="true"
           >
             {{ CATEGORY_META[category].shortLabel }}
@@ -220,7 +217,7 @@ async function handleSubmit() {
       </div>
     </el-form-item>
 
-    <div class="time-grid">
+    <div class="time-grid grid grid-cols-1 gap-0">
       <el-form-item
         :label="form.allDay ? '开始日期' : '开始时间'"
         :prop="form.allDay ? 'startDate' : 'startAt'"
@@ -232,7 +229,7 @@ async function handleSubmit() {
           value-format="YYYY-MM-DD"
           format="YYYY-MM-DD"
           placeholder="开始日期"
-          class="full-width"
+          class="w-full!"
         />
         <el-date-picker
           v-else
@@ -241,7 +238,7 @@ async function handleSubmit() {
           value-format="YYYY-MM-DDTHH:mm:ss"
           format="YYYY-MM-DD HH:mm"
           placeholder="开始时间"
-          class="full-width"
+          class="w-full!"
         />
       </el-form-item>
 
@@ -256,7 +253,7 @@ async function handleSubmit() {
           value-format="YYYY-MM-DD"
           format="YYYY-MM-DD"
           placeholder="结束日期"
-          class="full-width"
+          class="w-full!"
         />
         <el-date-picker
           v-else
@@ -265,16 +262,18 @@ async function handleSubmit() {
           value-format="YYYY-MM-DDTHH:mm:ss"
           format="YYYY-MM-DD HH:mm"
           placeholder="结束时间"
-          class="full-width"
+          class="w-full!"
         />
-        <p v-if="timeError" class="schedule-form__error" role="alert">{{ timeError }}</p>
+        <p v-if="timeError" class="mt-1 w-full text-xs leading-snug text-danger" role="alert">
+          {{ timeError }}
+        </p>
       </el-form-item>
     </div>
 
     <el-form-item label="全天">
-      <div class="switch-row">
+      <div class="switch-row flex flex-wrap items-center gap-x-3 gap-y-1">
         <el-switch v-model="form.allDay" active-text="全天事件" />
-        <span class="switch-row__hint">开启后按日期保存，首尾日期都包含</span>
+        <span class="text-[11px] text-ink-muted">开启后按日期保存，首尾日期都包含</span>
       </div>
     </el-form-item>
 
@@ -287,7 +286,7 @@ async function handleSubmit() {
     </el-form-item>
 
     <el-form-item label="状态">
-      <el-select v-model="form.status" class="status-select">
+      <el-select v-model="form.status" class="w-full!">
         <el-option
           v-for="status in ALL_STATUSES"
           :key="status"
@@ -308,7 +307,7 @@ async function handleSubmit() {
       />
     </el-form-item>
 
-    <div class="form-actions">
+    <div class="form-actions flex justify-end gap-2 pt-2">
       <el-button @click="emit('cancel')">取消</el-button>
       <el-button type="primary" :loading="props.submitting" @click="handleSubmit">
         {{ props.submitLabel }}
@@ -316,141 +315,3 @@ async function handleSubmit() {
     </div>
   </el-form>
 </template>
-
-<style scoped>
-.schedule-form {
-  padding: 4px 0 8px;
-}
-
-.schedule-form__banner {
-  margin-bottom: 16px;
-}
-
-.category-cards {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.category-card {
-  display: flex;
-  flex: 1;
-  gap: 7px;
-  align-items: center;
-  justify-content: center;
-  min-height: 46px;
-  padding: 6px 8px;
-  color: var(--color-ink-secondary);
-  font-size: 13px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 9px;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.category-card:hover {
-  border-color: var(--color-line-strong);
-}
-
-.category-card.is-active {
-  font-weight: 500;
-}
-
-.category-card:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.category-card__mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 5px;
-}
-
-.time-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-}
-
-.full-width {
-  width: 100%;
-}
-
-:deep(.el-date-editor.full-width) {
-  width: 100% !important;
-}
-
-.schedule-form__error {
-  width: 100%;
-  margin: 4px 0 0;
-  color: var(--color-danger);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.switch-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  align-items: center;
-}
-
-.switch-row__hint {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-}
-
-.status-select {
-  width: 100%;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 8px;
-}
-
-:deep(.el-form-item__label) {
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 16px;
-}
-
-:deep(.el-input__wrapper),
-:deep(.el-textarea__inner),
-:deep(.el-select__wrapper) {
-  background: var(--color-surface);
-  box-shadow: 0 0 0 1px var(--color-line) inset;
-}
-
-:deep(.el-input__wrapper.is-focus),
-:deep(.el-textarea__inner:focus),
-:deep(.el-select__wrapper.is-focused) {
-  box-shadow: 0 0 0 1px var(--color-focus) inset;
-}
-
-@media (max-width: 600px) {
-  .category-cards {
-    flex-direction: column;
-  }
-
-  .category-card {
-    justify-content: flex-start;
-    min-height: 48px;
-  }
-}
-</style>

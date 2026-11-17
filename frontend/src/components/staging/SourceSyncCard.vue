@@ -18,69 +18,29 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="source-card">
-    <div class="source-card__heading">
+  <section
+    class="source-card flex flex-col gap-2.5 rounded-[11px] border border-line bg-canvas px-3.5 py-[13px]"
+  >
+    <div class="source-card__heading flex items-start justify-between gap-3">
       <div>
-        <strong>{{ title }}</strong>
-        <p v-if="configured">
+        <strong class="text-[13px] font-semibold text-ink">{{ title }}</strong>
+        <p v-if="configured" class="mt-1 text-[11px] leading-relaxed text-ink-muted">
           @{{ username || '当前 Token 账号' }} · 最近 {{ lookbackDays }} 天
-          <span v-if="tokenConfigured" class="source-card__token">Token</span>
+          <span
+            v-if="tokenConfigured"
+            class="source-card__token ml-1 inline-block rounded-full border border-line px-[5px] text-[9px] text-focus"
+          >
+            Token
+          </span>
         </p>
-        <p v-else>{{ description }}</p>
+        <p v-else class="mt-1 text-[11px] leading-relaxed text-ink-muted">{{ description }}</p>
       </div>
       <el-button v-if="configured" :icon="Refresh" :loading="loading" @click="emit('sync')">
         同步
       </el-button>
     </div>
-    <p v-if="!configured" class="source-card__hint">{{ hint }}</p>
+    <p v-if="!configured" class="source-card__hint m-0 text-[11px] leading-relaxed text-ink-muted">
+      {{ hint }}
+    </p>
   </section>
 </template>
-
-<style scoped>
-.source-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 13px 14px;
-  background: var(--color-canvas);
-  border: 1px solid var(--color-line);
-  border-radius: 11px;
-}
-
-.source-card__heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.source-card__heading strong {
-  color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.source-card__heading p {
-  margin: 4px 0 0;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.source-card__token {
-  display: inline-block;
-  padding: 0 5px;
-  margin-left: 4px;
-  color: var(--color-focus);
-  font-size: 9px;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-}
-
-.source-card__hint {
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.6;
-}
-</style>

@@ -34,32 +34,47 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
 </script>
 
 <template>
-  <section class="agenda" aria-label="当天日程">
-    <header class="agenda__header">
+  <section class="agenda flex h-full min-h-0 flex-col" aria-label="当天日程">
+    <header
+      class="agenda__header flex items-start justify-between gap-3 border-b border-line px-[18px] pb-3.5 pt-[18px]"
+    >
       <div>
-        <p class="agenda__eyebrow">{{ isToday ? '今日安排' : '当天安排' }}</p>
-        <h2>{{ formatDayTitle(props.date) }}</h2>
+        <p class="agenda__eyebrow mb-1 text-[11px] tracking-[0.1em] text-ink-muted">
+          {{ isToday ? '今日安排' : '当天安排' }}
+        </p>
+        <h2 class="m-0 font-display text-[19px] font-semibold text-ink">
+          {{ formatDayTitle(props.date) }}
+        </h2>
       </div>
-      <div class="agenda__meta">
+      <div class="agenda__meta flex shrink-0 flex-col items-end gap-2">
         <button
           v-if="props.showStagingButton"
           type="button"
-          class="agenda__staging"
+          class="agenda__staging inline-flex min-h-[30px] cursor-pointer items-center gap-[5px] rounded-full border border-line bg-canvas px-2.5 text-[11px] text-focus"
           @click="emit('openStaging')"
         >
           暂存
-          <span v-if="props.pendingCount">{{ props.pendingCount }}</span>
+          <span
+            v-if="props.pendingCount"
+            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-focus text-[9px] text-surface"
+          >
+            {{ props.pendingCount }}
+          </span>
         </button>
-        <span class="agenda__count">
+        <span class="agenda__count shrink-0 text-xs tabular-nums text-ink-muted">
           {{ props.loading ? '加载中' : `${items.length} 项` }}
         </span>
       </div>
     </header>
-    <div v-if="props.loading" class="agenda__loading">
-      <span v-for="index in 3" :key="index" class="agenda__skeleton"></span>
+    <div v-if="props.loading" class="agenda__loading flex flex-col gap-2.5 p-4">
+      <span
+        v-for="index in 3"
+        :key="index"
+        class="agenda__skeleton h-[52px] animate-pulse rounded-lg bg-canvas"
+      ></span>
     </div>
 
-    <div v-else-if="isEmpty" class="agenda__empty">
+    <div v-else-if="isEmpty" class="agenda__empty flex flex-1 items-center justify-center">
       <EmptyState
         :title="isToday ? '今天还没有安排' : '这一天还没有安排'"
         description="留白也是日程的一部分，需要时再添加。"
@@ -68,37 +83,43 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
       />
     </div>
 
-    <ol v-else class="agenda__list">
+    <ol v-else class="agenda__list m-0 flex-1 list-none overflow-y-auto px-2.5 pb-4 pt-2">
       <li v-for="item in items" :key="item.id">
         <button
           type="button"
-          class="agenda-item"
-          :class="[STATUS_META[item.status].className]"
+          class="agenda-item flex w-full cursor-pointer items-start gap-[9px] rounded-[7px] border-0 border-b border-dashed border-line bg-transparent px-2 py-2.5 text-left hover:bg-canvas"
+          :class="[STATUS_META[item.status].className, STATUS_META[item.status].itemClass]"
           @click="emit('select', item)"
         >
-          <span class="agenda-item__time">{{ formatAgendaTime(item) }}</span>
           <span
-            class="agenda-item__marker"
-            :style="{
-              color: CATEGORY_META[item.category].color,
-              backgroundColor: CATEGORY_META[item.category].softColor,
-            }"
+            class="agenda-item__time flex-[0_0_40px] pt-0.5 text-xs tabular-nums text-ink-muted"
+          >
+            {{ formatAgendaTime(item) }}
+          </span>
+          <span
+            class="agenda-item__marker inline-flex h-[22px] flex-[0_0_22px] items-center justify-center rounded-md text-[10px] font-semibold"
+            :class="CATEGORY_META[item.category].badgeClass"
             aria-hidden="true"
           >
             {{ CATEGORY_META[item.category].shortLabel }}
           </span>
-          <span class="agenda-item__body">
-            <span class="agenda-item__title">
+          <span class="agenda-item__body flex min-w-0 flex-col gap-[3px]">
+            <span
+              class="agenda-item__title overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium leading-[1.4]"
+              :class="STATUS_META[item.status].titleClass"
+            >
               <span
                 v-if="STATUS_META[item.status].icon"
-                class="agenda-item__status"
+                class="agenda-item__status mr-[3px] text-success"
                 aria-hidden="true"
               >
                 {{ STATUS_META[item.status].icon }}
               </span>
               {{ item.title }}
             </span>
-            <span class="agenda-item__meta">
+            <span
+              class="agenda-item__meta overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-ink-muted"
+            >
               {{ CATEGORY_META[item.category].label }}
               <template v-if="item.location"> · {{ item.location }}</template>
             </span>
@@ -108,211 +129,3 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
     </ol>
   </section>
 </template>
-
-<style scoped>
-.agenda {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.agenda__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 18px 14px;
-  border-bottom: 1px solid var(--color-line);
-}
-
-.agenda__eyebrow {
-  margin: 0 0 4px;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-}
-
-.agenda__header h2 {
-  margin: 0;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 600;
-}
-
-.agenda__count {
-  flex: 0 0 auto;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.agenda__meta {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.agenda__staging {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 10px;
-  color: var(--color-focus);
-  font-size: 11px;
-  background: var(--color-canvas);
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.agenda__staging span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  color: var(--color-surface);
-  font-size: 9px;
-  background: var(--color-focus);
-  border-radius: 999px;
-}
-
-.agenda__staging:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.agenda__loading {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-}
-
-.agenda__skeleton {
-  height: 52px;
-  background: var(--color-canvas);
-  border-radius: 8px;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.agenda__empty {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-}
-
-.agenda__list {
-  flex: 1;
-  padding: 8px 10px 16px;
-  margin: 0;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.agenda-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  width: 100%;
-  padding: 10px 8px;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px dashed var(--color-line);
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.agenda-item:hover {
-  background: var(--color-canvas);
-}
-
-.agenda-item:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-.agenda-item__time {
-  flex: 0 0 40px;
-  padding-top: 2px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.agenda-item__marker {
-  display: inline-flex;
-  flex: 0 0 22px;
-  align-items: center;
-  justify-content: center;
-  height: 22px;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.agenda-item__body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.agenda-item__title {
-  overflow: hidden;
-  color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.agenda-item__status {
-  margin-right: 3px;
-  color: var(--color-success);
-}
-
-.agenda-item.status-cancelled {
-  opacity: 0.6;
-}
-
-.agenda-item.status-cancelled .agenda-item__title {
-  text-decoration: line-through;
-}
-
-.agenda-item.status-completed .agenda-item__title {
-  color: var(--color-ink-secondary);
-}
-
-.agenda-item__meta {
-  overflow: hidden;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.65;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .agenda__skeleton {
-    animation: none;
-  }
-}
-</style>

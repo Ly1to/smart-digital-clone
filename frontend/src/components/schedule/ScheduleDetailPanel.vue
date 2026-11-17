@@ -33,19 +33,19 @@ function sourceLabel(source: string): string {
 </script>
 
 <template>
-  <article class="detail-panel">
-    <header class="detail-panel__header">
-      <div class="detail-panel__heading">
+  <article class="detail-panel flex h-full min-h-0 flex-col overflow-y-auto p-[18px]">
+    <header class="detail-panel__header flex items-start justify-between gap-2.5">
+      <div class="detail-panel__heading flex flex-wrap items-center gap-2">
         <span
-          class="detail-panel__category"
-          :style="{
-            color: CATEGORY_META[schedule.category].color,
-            backgroundColor: CATEGORY_META[schedule.category].softColor,
-          }"
+          class="detail-panel__category inline-flex items-center gap-1 rounded-full px-[9px] py-[3px] text-[11px]"
+          :class="CATEGORY_META[schedule.category].badgeClass"
         >
           {{ CATEGORY_META[schedule.category].label }}
         </span>
-        <span class="detail-panel__status" :class="STATUS_META[schedule.status].className">
+        <span
+          class="detail-panel__status inline-flex items-center gap-1 rounded-full px-[9px] py-[3px] text-[11px]"
+          :class="STATUS_META[schedule.status].badgeClass"
+        >
           <span v-if="STATUS_META[schedule.status].icon" aria-hidden="true">
             {{ STATUS_META[schedule.status].icon }}
           </span>
@@ -54,7 +54,7 @@ function sourceLabel(source: string): string {
       </div>
       <button
         type="button"
-        class="detail-panel__close"
+        class="detail-panel__close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
         aria-label="关闭日程详情"
         @click="emit('close')"
       >
@@ -62,56 +62,78 @@ function sourceLabel(source: string): string {
       </button>
     </header>
 
-    <h2 class="detail-panel__title" :class="STATUS_META[schedule.status].className">
+    <h2
+      class="detail-panel__title mb-1.5 mt-3.5 break-words text-[22px] font-semibold leading-[1.35]"
+      :class="STATUS_META[schedule.status].titleClass"
+    >
       {{ schedule.title }}
     </h2>
 
-    <dl class="detail-list">
-      <div>
-        <dt>日期</dt>
-        <dd>{{ formatScheduleDate(schedule) }}</dd>
+    <dl class="detail-list m-0 mb-6 p-0 pt-1">
+      <div class="flex gap-3.5 border-b border-dashed border-line py-[11px]">
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">日期</dt>
+        <dd class="m-0 flex-1 break-words text-[13px] leading-[1.65] text-ink-secondary">
+          {{ formatScheduleDate(schedule) }}
+        </dd>
       </div>
-      <div>
-        <dt>时间</dt>
-        <dd>{{ formatScheduleTime(schedule) }}</dd>
+      <div class="flex gap-3.5 border-b border-dashed border-line py-[11px]">
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">时间</dt>
+        <dd class="m-0 flex-1 break-words text-[13px] leading-[1.65] text-ink-secondary">
+          {{ formatScheduleTime(schedule) }}
+        </dd>
       </div>
-      <div v-if="schedule.location">
-        <dt>地点</dt>
-        <dd>{{ schedule.location }}</dd>
+      <div
+        v-if="schedule.location"
+        class="flex gap-3.5 border-b border-dashed border-line py-[11px]"
+      >
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">地点</dt>
+        <dd class="m-0 flex-1 break-words text-[13px] leading-[1.65] text-ink-secondary">
+          {{ schedule.location }}
+        </dd>
       </div>
-      <div v-if="schedule.source && schedule.source !== 'manual'">
-        <dt>来源</dt>
-        <dd>
+      <div
+        v-if="schedule.source && schedule.source !== 'manual'"
+        class="flex gap-3.5 border-b border-dashed border-line py-[11px]"
+      >
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">来源</dt>
+        <dd class="m-0 flex-1 break-words text-[13px] leading-[1.65] text-ink-secondary">
           <a
             v-if="schedule.source_url"
             :href="schedule.source_url"
             target="_blank"
             rel="noreferrer"
-            class="detail-list__source"
+            class="detail-list__source text-focus no-underline hover:underline"
           >
             {{ sourceLabel(schedule.source) }}
           </a>
           <span v-else>{{ sourceLabel(schedule.source) }}</span>
         </dd>
       </div>
-      <div v-if="schedule.description">
-        <dt>描述</dt>
-        <dd class="detail-list__description">{{ schedule.description }}</dd>
+      <div
+        v-if="schedule.description"
+        class="flex gap-3.5 border-b border-dashed border-line py-[11px]"
+      >
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">描述</dt>
+        <dd
+          class="detail-list__description m-0 flex-1 whitespace-pre-wrap break-words text-[13px] leading-[1.65] text-ink-secondary"
+        >
+          {{ schedule.description }}
+        </dd>
       </div>
-      <div class="detail-list__meta">
-        <dt>记录</dt>
-        <dd>
+      <div class="detail-list__meta flex gap-3.5 border-b-0 border-dashed border-line py-[11px]">
+        <dt class="flex-[0_0_48px] text-xs text-ink-muted">记录</dt>
+        <dd class="m-0 flex-1 text-[11px] leading-[1.8] text-ink-muted">
           创建于 {{ formatLocalDateTime(schedule.created_at) }}<br />
           更新于 {{ formatLocalDateTime(schedule.updated_at) }}
         </dd>
       </div>
     </dl>
 
-    <footer class="detail-panel__actions">
+    <footer class="detail-panel__actions mt-auto flex flex-wrap items-center gap-4 pt-3">
       <el-button type="primary" :icon="EditPen" @click="emit('edit')">编辑</el-button>
       <button
         type="button"
-        class="detail-panel__delete"
+        class="detail-panel__delete cursor-pointer border-0 bg-transparent p-0 text-xs text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="deleting"
         @click="emit('delete')"
       >
@@ -120,175 +142,3 @@ function sourceLabel(source: string): string {
     </footer>
   </article>
 </template>
-
-<style scoped>
-.detail-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  padding: 18px;
-  overflow-y: auto;
-}
-
-.detail-panel__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.detail-panel__heading {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.detail-panel__category,
-.detail-panel__status {
-  display: inline-flex;
-  gap: 4px;
-  align-items: center;
-  padding: 3px 9px;
-  font-size: 11px;
-  border-radius: 999px;
-}
-
-.detail-panel__status {
-  color: var(--color-ink-muted);
-  background: var(--color-canvas);
-}
-
-.detail-panel__status.status-completed {
-  color: var(--color-success);
-}
-
-.detail-panel__status.status-cancelled {
-  color: var(--color-danger);
-}
-
-.detail-panel__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  color: var(--color-ink-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.detail-panel__close:hover {
-  color: var(--color-ink);
-  background: var(--color-canvas);
-}
-
-.detail-panel__close:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.detail-panel__title {
-  margin: 14px 0 6px;
-  color: var(--color-ink);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.35;
-  word-break: break-word;
-}
-
-.detail-panel__title.status-cancelled {
-  color: var(--color-ink-muted);
-  text-decoration: line-through;
-}
-
-.detail-panel__title.status-completed {
-  color: var(--color-ink-secondary);
-}
-
-.detail-list {
-  padding: 4px 0 0;
-  margin: 0 0 24px;
-}
-
-.detail-list > div {
-  display: flex;
-  gap: 14px;
-  padding: 11px 0;
-  border-bottom: 1px dashed var(--color-line);
-}
-
-.detail-list dt {
-  flex: 0 0 48px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-}
-
-.detail-list dd {
-  flex: 1;
-  margin: 0;
-  color: var(--color-ink-secondary);
-  font-size: 13px;
-  line-height: 1.65;
-  word-break: break-word;
-}
-
-.detail-list__description {
-  white-space: pre-wrap;
-}
-
-.detail-list__source {
-  color: var(--color-focus);
-  text-decoration: none;
-}
-
-.detail-list__source:hover {
-  text-decoration: underline;
-}
-
-.detail-list__meta {
-  border-bottom: 0 !important;
-}
-
-.detail-list__meta dd {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.8;
-}
-
-.detail-panel__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  margin-top: auto;
-  padding-top: 12px;
-}
-
-.detail-panel__delete {
-  padding: 4px 0;
-  color: var(--color-danger);
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.detail-panel__delete:hover {
-  text-decoration: underline;
-}
-
-.detail-panel__delete:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.detail-panel__delete:focus-visible {
-  outline: 2px solid var(--color-danger);
-  outline-offset: 2px;
-}
-</style>

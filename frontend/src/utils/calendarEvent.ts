@@ -42,35 +42,77 @@ export function renderEventContent(arg: EventContentArg): { domNodes: Node[] } {
   const isTimeGrid = arg.view.type.startsWith('timeGrid')
 
   const root = document.createElement('div')
-  root.className = `schedule-event__content${isTimeGrid ? ' is-timegrid' : ''}`
+  root.className = [
+    'schedule-event__content',
+    'flex min-w-0 items-start gap-1.5 overflow-hidden rounded-md border-l-[3px] px-1.5 py-[3px]',
+    categoryMeta.softClass,
+    categoryMeta.borderClass,
+    statusMeta.eventItemClass,
+    isTimeGrid ? 'flex-col gap-0.5 py-1' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const marker = createSpan(
-    `schedule-event__marker${isTimeGrid ? ' is-full' : ''}`,
+    [
+      'schedule-event__marker',
+      'shrink-0 pt-px text-[10px] font-bold leading-[1.3]',
+      categoryMeta.textClass,
+      isTimeGrid ? 'pt-0 text-[11px] leading-[1.2]' : '',
+    ]
+      .filter(Boolean)
+      .join(' '),
     isTimeGrid ? categoryMeta.label : categoryMeta.shortLabel,
   )
   root.appendChild(marker)
 
   const main = document.createElement('span')
-  main.className = 'schedule-event__main'
+  main.className = 'schedule-event__main flex min-w-0 flex-col gap-px'
 
   const head = document.createElement('span')
-  head.className = 'schedule-event__head'
+  head.className = 'schedule-event__head flex min-w-0 items-baseline gap-1'
   if (!isTimeGrid && arg.timeText) {
-    head.appendChild(createSpan('schedule-event__time', arg.timeText))
+    head.appendChild(
+      createSpan(
+        'schedule-event__time shrink-0 text-[10px] tabular-nums text-ink-muted max-md:hidden',
+        arg.timeText,
+      ),
+    )
   }
-  head.appendChild(createSpan('schedule-event__title', arg.event.title))
+  head.appendChild(
+    createSpan(
+      [
+        'schedule-event__title',
+        'overflow-hidden text-[12px] font-medium leading-[1.35] text-ellipsis whitespace-nowrap max-md:text-[11px]',
+        statusMeta.eventTitleClass,
+      ].join(' '),
+      arg.event.title,
+    ),
+  )
   if (statusMeta.icon) {
-    head.appendChild(createSpan('schedule-event__status', statusMeta.icon))
+    head.appendChild(
+      createSpan('schedule-event__status shrink-0 text-[10px] text-success', statusMeta.icon),
+    )
   }
   main.appendChild(head)
 
   if (isTimeGrid && arg.timeText) {
-    main.appendChild(createSpan('schedule-event__time', arg.timeText))
+    main.appendChild(
+      createSpan(
+        'schedule-event__time shrink-0 text-[10px] tabular-nums text-ink-muted max-md:hidden',
+        arg.timeText,
+      ),
+    )
   }
 
   const location = arg.event.extendedProps.location as string | null
   if (isTimeGrid && location) {
-    main.appendChild(createSpan('schedule-event__location', location))
+    main.appendChild(
+      createSpan(
+        'schedule-event__location overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-ink-muted',
+        location,
+      ),
+    )
   }
 
   root.appendChild(main)

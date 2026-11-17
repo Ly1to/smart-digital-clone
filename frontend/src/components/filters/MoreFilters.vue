@@ -30,18 +30,26 @@ function clearAll() {
 </script>
 
 <template>
-  <details class="more-filters">
-    <summary>更多筛选</summary>
+  <details class="more-filters border-t border-line">
+    <summary
+      class="relative cursor-pointer list-none px-1 pb-2 pt-3 text-xs font-semibold tracking-[0.08em] text-ink-secondary after:absolute after:right-0 after:font-normal after:text-ink-muted after:content-['+'] open:after:content-['−'] [&::-webkit-details-marker]:hidden"
+    >
+      更多筛选
+    </summary>
 
-    <div class="more-filters__body">
-      <fieldset class="status-group">
-        <legend>状态</legend>
+    <div class="more-filters__body flex flex-col gap-3 pb-1.5 pt-0.5">
+      <fieldset class="status-group m-0 flex flex-wrap gap-1.5 border-0 p-0">
+        <legend class="mb-1.5 w-full text-[11px] text-ink-muted">状态</legend>
         <button
           v-for="status in ALL_STATUSES"
           :key="status"
           type="button"
-          class="status-pill"
-          :class="[STATUS_META[status].className, { 'is-active': statuses.includes(status) }]"
+          class="status-pill min-h-[30px] cursor-pointer rounded-full border px-2.5 text-xs max-md:min-h-11 max-md:px-3.5"
+          :class="
+            statuses.includes(status)
+              ? `bg-surface opacity-100 ${STATUS_META[status].pillActiveClass}`
+              : 'border-line bg-transparent text-ink-muted opacity-60'
+          "
           :aria-pressed="statuses.includes(status)"
           @click="toggleStatus(status)"
         >
@@ -52,7 +60,7 @@ function clearAll() {
         </button>
       </fieldset>
 
-      <label class="date-filter">
+      <label class="date-filter flex flex-col gap-1.5 text-[11px] text-ink-muted">
         <span>时间范围</span>
         <el-date-picker
           :model-value="store.filters.dateRange"
@@ -62,150 +70,23 @@ function clearAll() {
           end-placeholder="结束日期"
           range-separator="至"
           unlink-panels
+          class="w-full!"
           @update:model-value="updateDateRange"
         />
       </label>
 
-      <button v-if="store.hasActiveFilters" type="button" class="clear-button" @click="clearAll">
+      <button
+        v-if="store.hasActiveFilters"
+        type="button"
+        class="clear-button cursor-pointer self-start border-0 bg-transparent p-0 text-xs text-danger hover:underline"
+        @click="clearAll"
+      >
         清除全部筛选
       </button>
 
-      <p class="more-filters__hint">
+      <p class="more-filters__hint m-0 text-[11px] leading-relaxed text-ink-muted">
         {{ store.activeFilterSummary || '未启用额外筛选' }}
       </p>
     </div>
   </details>
 </template>
-
-<style scoped>
-.more-filters {
-  border-top: 1px solid var(--color-line);
-}
-
-.more-filters summary {
-  padding: 12px 4px 8px;
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  list-style: none;
-}
-
-.more-filters summary::-webkit-details-marker {
-  display: none;
-}
-
-.more-filters summary::after {
-  content: '+';
-  float: right;
-  color: var(--color-ink-muted);
-  font-weight: 400;
-}
-
-.more-filters[open] summary::after {
-  content: '−';
-}
-
-.more-filters summary:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.more-filters__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 2px 0 6px;
-}
-
-.status-group {
-  padding: 0;
-  margin: 0;
-  border: 0;
-}
-
-.status-group legend,
-.date-filter > span {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-}
-
-.status-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.status-group legend {
-  width: 100%;
-}
-
-.status-pill {
-  min-height: 30px;
-  padding: 0 10px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  background: transparent;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.status-pill.is-active {
-  color: var(--color-ink-secondary);
-  background: var(--color-surface);
-  opacity: 1;
-}
-
-.status-pill:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.status-pill.status-completed.is-active {
-  color: var(--color-success);
-  border-color: var(--color-success);
-}
-
-.status-pill.status-cancelled.is-active {
-  color: var(--color-danger);
-  border-color: var(--color-danger);
-}
-
-.date-filter :deep(.el-date-editor) {
-  width: 100%;
-}
-
-.clear-button {
-  align-self: flex-start;
-  padding: 2px 0;
-  color: var(--color-danger);
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.clear-button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.more-filters__hint {
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-@media (max-width: 767px) {
-  .status-pill {
-    min-height: 44px;
-    padding: 0 14px;
-  }
-}
-</style>

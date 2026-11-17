@@ -129,11 +129,11 @@ defineExpose({ focusSearch: openSearch, closeSearch })
 </script>
 
 <template>
-  <div ref="rootRef" class="search-popover">
+  <div ref="rootRef" class="search-popover relative">
     <button
       type="button"
-      class="icon-button"
-      :class="{ 'is-active': open }"
+      class="icon-button inline-flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-lg border bg-transparent p-0 text-[17px] text-ink-secondary transition-colors hover:border-line hover:bg-surface max-md:h-11 max-md:w-11"
+      :class="open ? 'is-active border-line bg-surface' : 'border-transparent'"
       aria-label="搜索日程"
       title="搜索日程（/）"
       @click="toggleSearch"
@@ -141,7 +141,12 @@ defineExpose({ focusSearch: openSearch, closeSearch })
       <el-icon><Search /></el-icon>
     </button>
 
-    <div v-if="open" class="search-panel" role="dialog" aria-label="搜索日程">
+    <div
+      v-if="open"
+      class="search-panel absolute right-0 top-[calc(100%+10px)] z-50 w-[400px] max-w-[calc(100vw-24px)] animate-[panel-in_0.16s_ease] rounded-[14px] border border-line bg-surface-raised p-3.5 shadow-popover max-md:fixed max-md:left-3 max-md:right-3 max-md:top-[66px] max-md:w-auto max-md:max-w-none"
+      role="dialog"
+      aria-label="搜索日程"
+    >
       <el-input
         ref="inputRef"
         v-model="keyword"
@@ -151,43 +156,64 @@ defineExpose({ focusSearch: openSearch, closeSearch })
         @keydown.esc="closeSearch"
       >
         <template #suffix>
-          <el-icon v-if="loading" class="search-spinner" aria-label="搜索中">
+          <el-icon v-if="loading" class="animate-spin" aria-label="搜索中">
             <Loading />
           </el-icon>
         </template>
       </el-input>
 
-      <div class="search-panel__body">
-        <p v-if="loading" class="search-hint">搜索中...</p>
-        <div v-else-if="error" class="search-error">
+      <div class="search-panel__body max-h-[min(56vh,480px)] overflow-y-auto pt-2.5">
+        <p
+          v-if="loading"
+          class="search-hint m-0 px-2 py-[26px] text-center text-[13px] text-ink-muted"
+        >
+          搜索中...
+        </p>
+        <div
+          v-else-if="error"
+          class="search-error flex items-center justify-between gap-3 px-2 py-3 text-[13px] text-danger"
+        >
           <span>{{ error }}</span>
           <el-button text type="primary" size="small" @click="runSearch">重试</el-button>
         </div>
-        <p v-else-if="!keyword.trim()" class="search-hint">输入关键词搜索标题或描述</p>
-        <p v-else-if="groups.length === 0" class="search-hint">没有找到匹配的日程</p>
+        <p
+          v-else-if="!keyword.trim()"
+          class="search-hint m-0 px-2 py-[26px] text-center text-[13px] text-ink-muted"
+        >
+          输入关键词搜索标题或描述
+        </p>
+        <p
+          v-else-if="groups.length === 0"
+          class="search-hint m-0 px-2 py-[26px] text-center text-[13px] text-ink-muted"
+        >
+          没有找到匹配的日程
+        </p>
 
         <div v-else class="search-results">
           <section v-for="group in groups" :key="group.date" class="search-group">
-            <h4>{{ group.label }}</h4>
+            <h4 class="m-0 px-2 pb-1.5 pt-2.5 text-xs font-medium text-ink-muted">
+              {{ group.label }}
+            </h4>
             <button
               v-for="item in group.items"
               :key="item.id"
               type="button"
-              class="search-result"
+              class="search-result flex w-full cursor-pointer items-start gap-2.5 rounded-lg border-0 bg-transparent px-2 py-[9px] text-left hover:bg-canvas max-md:min-h-11"
               @click="selectSchedule(item)"
             >
               <span
-                class="search-result__marker"
-                :style="{
-                  color: CATEGORY_META[item.category].color,
-                  backgroundColor: CATEGORY_META[item.category].softColor,
-                }"
+                class="search-result__marker mt-px inline-flex h-6 flex-[0_0_24px] items-center justify-center rounded-md text-[11px] font-semibold"
+                :class="CATEGORY_META[item.category].badgeClass"
               >
                 {{ CATEGORY_META[item.category].shortLabel }}
               </span>
-              <span class="search-result__text">
-                <strong>{{ item.title }}</strong>
-                <small>
+              <span class="search-result__text flex min-w-0 flex-col gap-[3px]">
+                <strong
+                  class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-medium text-ink"
+                >
+                  {{ item.title }}
+                </strong>
+                <small class="text-xs text-ink-muted">
                   {{ CATEGORY_META[item.category].label }} · {{ formatScheduleTime(item) }}
                 </small>
               </span>
@@ -198,191 +224,3 @@ defineExpose({ focusSearch: openSearch, closeSearch })
     </div>
   </div>
 </template>
-
-<style scoped>
-.search-popover {
-  position: relative;
-}
-
-.icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--color-ink-secondary);
-  font-size: 17px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.icon-button:hover,
-.icon-button.is-active {
-  background: var(--color-surface);
-  border-color: var(--color-line);
-}
-
-.icon-button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.search-panel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 50;
-  width: 400px;
-  max-width: calc(100vw - 24px);
-  padding: 14px;
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-line);
-  border-radius: 14px;
-  box-shadow: 0 16px 40px rgb(55 46 35 / 14%);
-  animation: panel-in 0.16s ease;
-}
-
-.search-panel__body {
-  max-height: min(56vh, 480px);
-  padding-top: 10px;
-  overflow-y: auto;
-}
-
-.search-spinner {
-  animation: search-spin 0.9s linear infinite;
-}
-
-@keyframes search-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.search-hint {
-  padding: 26px 8px;
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: 13px;
-  text-align: center;
-}
-
-.search-error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 8px;
-  color: var(--color-danger);
-  font-size: 13px;
-}
-
-.search-group h4 {
-  padding: 10px 8px 6px;
-  margin: 0;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.search-result {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  width: 100%;
-  padding: 9px 8px;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.search-result:hover {
-  background: var(--color-canvas);
-}
-
-.search-result:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-.search-result__marker {
-  display: inline-flex;
-  flex: 0 0 24px;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  margin-top: 1px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.search-result__text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.search-result__text strong {
-  overflow: hidden;
-  color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.search-result__text small {
-  color: var(--color-ink-muted);
-  font-size: 12px;
-}
-
-@keyframes panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 767px) {
-  .search-panel {
-    position: fixed;
-    top: 66px;
-    right: 12px;
-    left: 12px;
-    width: auto;
-    max-width: none;
-  }
-
-  .icon-button {
-    width: 44px;
-    height: 44px;
-  }
-
-  .search-result {
-    min-height: 44px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .search-panel {
-    animation: none;
-  }
-
-  .search-spinner {
-    animation: none;
-  }
-}
-</style>

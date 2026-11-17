@@ -5,112 +5,33 @@ const { theme, themes, setTheme } = useTheme()
 </script>
 
 <template>
-  <section class="theme-switcher" aria-label="主题色">
-    <div class="theme-switcher__heading">
-      <h3>主题色</h3>
-      <span>{{ themes.find((item) => item.id === theme)?.label }}</span>
+  <section class="theme-switcher pt-0.5" aria-label="主题色">
+    <div class="theme-switcher__heading mb-2 flex items-center justify-between">
+      <h3 class="m-0 text-xs font-semibold tracking-[0.08em] text-ink-secondary">主题色</h3>
+      <span class="text-[11px] text-ink-muted">
+        {{ themes.find((item) => item.id === theme)?.label }}
+      </span>
     </div>
 
-    <div class="theme-options" role="radiogroup" aria-label="选择主题色">
+    <div class="theme-options flex gap-1.5" role="radiogroup" aria-label="选择主题色">
       <button
         v-for="option in themes"
         :key="option.id"
         type="button"
         role="radio"
-        class="theme-option"
-        :class="{ 'is-active': theme === option.id }"
+        class="theme-option flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-1.5 rounded-[9px] border px-1 py-2 text-ink-secondary transition-colors hover:border-line-strong max-md:min-h-14"
+        :class="theme === option.id ? 'border-focus bg-surface-raised' : 'border-line bg-surface'"
         :aria-checked="theme === option.id"
         :title="option.description"
         @click="setTheme(option.id)"
       >
         <span
-          class="theme-option__swatch"
+          class="theme-option__swatch h-[18px] w-[18px] rounded-full shadow-[inset_0_0_0_2px_rgb(255_253_248/55%)]"
           :style="{ backgroundColor: option.color }"
           aria-hidden="true"
         ></span>
-        <span class="theme-option__label">{{ option.label }}</span>
+        <span class="theme-option__label text-[11px] leading-none">{{ option.label }}</span>
       </button>
     </div>
   </section>
 </template>
-
-<style scoped>
-.theme-switcher {
-  padding-top: 2px;
-}
-
-.theme-switcher__heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.theme-switcher__heading h3 {
-  margin: 0;
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-.theme-switcher__heading span {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-}
-
-.theme-options {
-  display: flex;
-  gap: 6px;
-}
-
-.theme-option {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 5px;
-  align-items: center;
-  min-width: 0;
-  padding: 8px 4px;
-  color: var(--color-ink-secondary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 9px;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.theme-option:hover {
-  border-color: var(--color-line-strong);
-}
-
-.theme-option.is-active {
-  border-color: var(--color-focus);
-  background: var(--color-surface-raised);
-}
-
-.theme-option:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.theme-option__swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgb(255 253 248 / 55%);
-}
-
-.theme-option__label {
-  font-size: 11px;
-  line-height: 1;
-}
-
-@media (max-width: 767px) {
-  .theme-option {
-    min-height: 56px;
-  }
-}
-</style>

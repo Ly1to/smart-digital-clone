@@ -1,4 +1,10 @@
-:root {
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
+  --font-display: 'Noto Serif SC', 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+
   --color-canvas: #f4f0e7;
   --color-surface: #fffdf8;
   --color-surface-raised: #fffbf2;
@@ -9,13 +15,27 @@
   --color-line-strong: #c8bead;
   --color-focus: #2f6f88;
   --color-danger: #a6473f;
+  --color-danger-soft: #f9efed;
+  --color-danger-border: #e3c7c3;
   --color-success: #52705b;
+  --color-success-soft: #f2f6f3;
+  --color-success-border: #cfdbd2;
+  --color-work: #356e84;
+  --color-work-soft: #e7eff2;
+  --color-outing: #bc6745;
+  --color-outing-soft: #f6e8e0;
+  --color-private: #75608a;
+  --color-private-soft: #eee9f2;
+  --color-today: #f7efe2;
+  --color-now: #b46254;
 
-  --font-sans:
-    'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
-  --font-display: 'Noto Serif SC', 'Songti SC', 'STSong', 'Noto Serif CJK SC', serif;
+  --shadow-card: 0 18px 50px rgb(55 46 35 / 10%);
+  --shadow-popover: 0 16px 40px rgb(55 46 35 / 14%);
+  --shadow-soft: 0 10px 30px rgb(55 46 35 / 10%);
+}
 
-  --el-color-primary: #2f6f88;
+:root {
+  --el-color-primary: var(--color-focus);
   --el-color-primary-light-3: #5f8fa3;
   --el-color-primary-light-5: #8aa9b6;
   --el-color-primary-light-7: #b9cbd2;
@@ -47,8 +67,8 @@
   --el-border-radius-small: 6px;
   --el-border-radius-round: 999px;
   --el-font-family: var(--font-sans);
-  --el-box-shadow-light: 0 10px 30px rgb(55 46 35 / 10%);
-  --el-box-shadow: 0 16px 44px rgb(55 46 35 / 14%);
+  --el-box-shadow-light: var(--shadow-soft);
+  --el-box-shadow: var(--shadow-popover);
   --el-mask-color: rgb(37 35 31 / 32%);
 }
 
@@ -85,62 +105,84 @@
   --el-color-primary-dark-2: #6e4836;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    @apply m-0 overflow-hidden bg-canvas font-sans text-sm leading-[1.55] text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    color: var(--color-ink);
+    background: #e3ecef;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
 }
 
-html,
-body,
-#app {
-  height: 100%;
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-body {
-  margin: 0;
-  overflow: hidden;
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.55;
-  background: var(--color-canvas);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
-
-button:focus-visible,
-a:focus-visible,
-summary:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-::selection {
-  color: var(--color-ink);
-  background: #e3ecef;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-line-strong);
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+/* Element Plus 由组件库渲染内部 DOM，保留必要的主题覆盖。 */
 .el-button {
   min-height: 36px;
   font-weight: 500;
@@ -161,6 +203,16 @@ summary:focus-visible {
   --el-button-border-color: var(--color-danger);
   --el-button-hover-bg-color: #8c3a33;
   --el-button-hover-border-color: #8c3a33;
+}
+
+.el-form-item {
+  margin-bottom: 16px;
+}
+
+.el-form-item__label {
+  color: var(--color-ink-secondary);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .el-input__wrapper,
@@ -243,7 +295,12 @@ summary:focus-visible {
   padding: 16px 20px;
 }
 
+.el-drawer.staging-drawer .el-drawer__body {
+  padding: 0;
+}
+
 .el-drawer.mobile-panel .el-drawer__body {
+  height: 100%;
   padding: 0;
 }
 
@@ -268,6 +325,18 @@ summary:focus-visible {
 .el-message-box__message {
   color: var(--color-ink-secondary);
   line-height: 1.7;
+}
+
+.el-dialog {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+.el-dialog__title {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 18px;
 }
 
 .el-message {
@@ -310,6 +379,15 @@ summary:focus-visible {
   background: linear-gradient(90deg, var(--color-line) 25%, #f7f1e7 37%, var(--color-line) 63%);
 }
 
+.auth-form .el-form-item {
+  margin-bottom: 15px;
+}
+
+.schedule-form .el-date-editor,
+.schedule-form .el-select {
+  width: 100%;
+}
+
 @media (max-width: 767px) {
   .el-drawer.mobile-panel {
     border-radius: 16px 16px 0 0;
@@ -326,16 +404,5 @@ summary:focus-visible {
   .el-input__wrapper,
   .el-select__wrapper {
     min-height: 44px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
   }
 }

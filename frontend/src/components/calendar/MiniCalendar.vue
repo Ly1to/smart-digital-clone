@@ -116,169 +116,81 @@ function selectDay(day: MiniDay) {
 </script>
 
 <template>
-  <section class="mini-calendar" aria-label="小型月历">
-    <div class="mini-calendar__header">
-      <button type="button" aria-label="上个月" @click="changeMonth(-1)">
+  <section
+    class="mini-calendar rounded-xl border border-line bg-surface px-3.5 pb-3 pt-3.5"
+    aria-label="小型月历"
+  >
+    <div class="mini-calendar__header mb-2.5 flex items-center justify-between gap-1.5">
+      <button
+        type="button"
+        class="inline-flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+        aria-label="上个月"
+        @click="changeMonth(-1)"
+      >
         <el-icon><ArrowLeft /></el-icon>
       </button>
-      <button type="button" class="mini-calendar__title" title="回到本月" @click="resetMonth">
+      <button
+        type="button"
+        class="mini-calendar__title flex-1 border-0 bg-transparent p-0 font-display text-sm font-semibold text-ink"
+        title="回到本月"
+        @click="resetMonth"
+      >
         {{ formatMonthTitle(cursor) }}
       </button>
-      <button type="button" aria-label="下个月" @click="changeMonth(1)">
+      <button
+        type="button"
+        class="inline-flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+        aria-label="下个月"
+        @click="changeMonth(1)"
+      >
         <el-icon><ArrowRight /></el-icon>
       </button>
     </div>
 
-    <div class="mini-calendar__weekdays" aria-hidden="true">
+    <div
+      class="mini-calendar__weekdays mb-1 grid grid-cols-7 text-center text-[10px] text-ink-muted"
+      aria-hidden="true"
+    >
       <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
     </div>
 
-    <div class="mini-calendar__grid" role="grid" aria-label="选择日期">
+    <div class="mini-calendar__grid grid grid-cols-7" role="grid" aria-label="选择日期">
       <button
         v-for="day in days"
         :key="day.key"
         type="button"
         role="gridcell"
-        class="mini-calendar__day"
-        :class="{
-          'is-outside': !day.inMonth,
-          'is-today': day.isToday,
-          'is-selected': day.isSelected,
-        }"
+        class="mini-calendar__day relative flex h-8 min-w-0 cursor-pointer flex-col items-center justify-center rounded-[7px] border-0 p-0 hover:bg-canvas max-md:h-11"
+        :class="[
+          day.isSelected
+            ? 'is-selected bg-canvas shadow-[inset_0_0_0_1px_var(--color-line-strong)]'
+            : 'bg-transparent',
+          !day.inMonth ? 'is-outside text-ink-muted opacity-55' : 'text-ink-secondary',
+          { 'is-today': day.isToday },
+        ]"
         :aria-label="day.key"
         :aria-selected="day.isSelected"
         @click="selectDay(day)"
       >
-        <span class="mini-calendar__number">{{ day.day }}</span>
-        <span v-if="day.categories.length" class="mini-calendar__dots" aria-hidden="true">
+        <span
+          class="mini-calendar__number text-[11px] leading-none tabular-nums"
+          :class="day.isToday ? 'font-bold text-focus' : ''"
+        >
+          {{ day.day }}
+        </span>
+        <span
+          v-if="day.categories.length"
+          class="mini-calendar__dots absolute bottom-0.5 flex gap-0.5"
+          aria-hidden="true"
+        >
           <span
             v-for="category in day.categories.slice(0, 3)"
             :key="category"
-            :style="{ backgroundColor: CATEGORY_META[category].color }"
+            class="h-[3px] w-[3px] rounded-full"
+            :class="CATEGORY_META[category].dotClass"
           ></span>
         </span>
       </button>
     </div>
   </section>
 </template>
-
-<style scoped>
-.mini-calendar {
-  padding: 14px 14px 12px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
-}
-
-.mini-calendar__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.mini-calendar__header button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0;
-  color: var(--color-ink-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.mini-calendar__header button:hover {
-  color: var(--color-ink);
-  background: var(--color-canvas);
-}
-
-.mini-calendar__header button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.mini-calendar__title {
-  flex: 1;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.mini-calendar__weekdays,
-.mini-calendar__grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.mini-calendar__weekdays {
-  margin-bottom: 4px;
-  color: var(--color-ink-muted);
-  font-size: 10px;
-  text-align: center;
-}
-
-.mini-calendar__day {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  height: 32px;
-  padding: 0;
-  color: var(--color-ink-secondary);
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.mini-calendar__day:hover {
-  background: var(--color-canvas);
-}
-
-.mini-calendar__day:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-.mini-calendar__day.is-outside {
-  color: var(--color-ink-muted);
-  opacity: 0.55;
-}
-
-.mini-calendar__day.is-today .mini-calendar__number {
-  color: var(--color-focus);
-  font-weight: 700;
-}
-
-.mini-calendar__day.is-selected {
-  background: var(--color-canvas);
-  box-shadow: inset 0 0 0 1px var(--color-line-strong);
-}
-
-.mini-calendar__number {
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.mini-calendar__dots {
-  position: absolute;
-  bottom: 2px;
-  display: flex;
-  gap: 2px;
-}
-
-.mini-calendar__dots span {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-}
-</style>

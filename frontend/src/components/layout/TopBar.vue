@@ -43,32 +43,76 @@ defineExpose({ focusSearch })
 </script>
 
 <template>
-  <header class="top-bar">
-    <div class="top-bar__identity">
-      <span class="top-bar__seal" aria-hidden="true">日</span>
-      <div class="top-bar__titles">
-        <strong class="top-bar__product">个人日程</strong>
-        <span class="top-bar__title">{{ title }}</span>
+  <header
+    class="top-bar flex min-h-[70px] flex-wrap items-center gap-x-[18px] gap-y-3.5 border-b border-line px-6 py-3 max-xl:px-4 max-xl:py-2.5 max-md:grid max-md:min-h-0 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-2 max-md:gap-y-1.5 max-md:px-3 max-md:py-2.5"
+  >
+    <div
+      class="top-bar__identity col-start-1 row-start-1 mr-auto flex min-w-0 items-center gap-2.5 max-md:mr-0"
+    >
+      <span
+        class="top-bar__seal inline-flex h-[34px] w-[34px] flex-[0_0_34px] items-center justify-center rounded-[10px] bg-focus font-display text-[17px] text-surface max-md:hidden"
+        aria-hidden="true"
+      >
+        日
+      </span>
+      <div class="top-bar__titles flex min-w-0 flex-col gap-0.5">
+        <strong
+          class="top-bar__product text-[13px] font-semibold tracking-[0.04em] text-ink max-md:text-[11px] max-md:text-ink-muted"
+        >
+          个人日程
+        </strong>
+        <span
+          class="top-bar__title overflow-hidden text-ellipsis whitespace-nowrap font-display text-[21px] font-semibold leading-tight text-ink max-xl:text-[19px] max-md:text-lg"
+        >
+          {{ title }}
+        </span>
       </div>
     </div>
 
-    <div class="top-bar__nav" aria-label="日期导航">
-      <button type="button" class="nav-button" aria-label="上一个周期" @click="emit('prev')">
+    <div
+      class="top-bar__nav col-span-2 row-start-2 flex items-center gap-1 max-md:justify-self-start max-md:pt-0.5"
+      aria-label="日期导航"
+    >
+      <button
+        type="button"
+        class="nav-button inline-flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-[15px] text-ink-secondary transition-colors hover:border-line hover:bg-surface hover:text-ink max-md:min-h-11"
+        aria-label="上一个周期"
+        @click="emit('prev')"
+      >
         <el-icon><ArrowLeft /></el-icon>
       </button>
-      <button type="button" class="today-button" @click="emit('today')">今天</button>
-      <button type="button" class="nav-button" aria-label="下一个周期" @click="emit('next')">
+      <button
+        type="button"
+        class="today-button min-h-[38px] cursor-pointer rounded-lg border border-transparent bg-transparent px-[11px] text-[13px] text-ink-secondary transition-colors hover:border-line hover:bg-surface hover:text-ink max-md:min-h-11"
+        @click="emit('today')"
+      >
+        今天
+      </button>
+      <button
+        type="button"
+        class="nav-button inline-flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-[15px] text-ink-secondary transition-colors hover:border-line hover:bg-surface hover:text-ink max-md:min-h-11"
+        aria-label="下一个周期"
+        @click="emit('next')"
+      >
         <el-icon><ArrowRight /></el-icon>
       </button>
     </div>
 
-    <div class="top-bar__views" role="group" aria-label="视图切换">
+    <div
+      class="top-bar__views col-span-2 row-start-3 flex items-center gap-0.5 rounded-[10px] bg-[rgb(223_215_200/42%)] p-[3px] max-md:w-full max-md:justify-between"
+      role="group"
+      aria-label="视图切换"
+    >
       <button
         v-for="option in viewOptions"
         :key="option.value"
         type="button"
-        class="view-button"
-        :class="{ 'is-active': option.value === props.view }"
+        class="view-button min-h-8 min-w-[38px] cursor-pointer rounded-lg border-0 px-3 text-[13px] transition-colors hover:bg-surface hover:text-ink max-md:min-h-11 max-md:flex-1"
+        :class="
+          option.value === props.view
+            ? 'is-active bg-ink text-surface'
+            : 'bg-transparent text-ink-secondary'
+        "
         :aria-pressed="option.value === props.view"
         @click="emit('changeView', option.value)"
       >
@@ -76,18 +120,23 @@ defineExpose({ focusSearch })
       </button>
     </div>
 
-    <div class="top-bar__actions">
+    <div
+      class="top-bar__actions col-start-2 row-start-1 flex items-center gap-1.5 max-md:justify-self-end"
+    >
       <button
         v-if="!props.isMobile"
         type="button"
-        class="staging-button"
+        class="staging-button relative inline-flex min-h-[38px] cursor-pointer items-center gap-[5px] rounded-lg border border-transparent bg-transparent px-2.5 text-[13px] text-ink-secondary transition-colors hover:border-line hover:bg-surface hover:text-ink"
         aria-label="打开暂存区"
         title="待确认日程暂存区"
         @click="emit('toggleStaging')"
       >
         <el-icon><Collection /></el-icon>
         <span>暂存</span>
-        <span v-if="props.stagingCount" class="staging-button__badge">
+        <span
+          v-if="props.stagingCount"
+          class="staging-button__badge inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-focus px-1 text-[10px] tabular-nums text-surface"
+        >
           {{ props.stagingCount > 99 ? '99+' : props.stagingCount }}
         </span>
       </button>
@@ -97,277 +146,30 @@ defineExpose({ focusSearch })
       <button
         v-if="props.showFilterButton"
         type="button"
-        class="filter-button"
-        :class="{ 'has-filter': props.filterSummary }"
+        class="filter-button relative min-h-[38px] cursor-pointer rounded-lg border bg-transparent px-[11px] text-[13px] transition-colors hover:border-line hover:bg-surface hover:text-ink max-md:min-h-11"
+        :class="
+          props.filterSummary
+            ? 'has-filter border-line-strong text-focus'
+            : 'border-transparent text-ink-secondary'
+        "
         aria-label="打开筛选"
         @click="emit('toggleFilters')"
       >
         筛选
-        <span v-if="props.filterSummary" class="filter-button__dot"></span>
+        <span
+          v-if="props.filterSummary"
+          class="filter-button__dot absolute right-1.5 top-[7px] h-[5px] w-[5px] rounded-full bg-focus"
+        ></span>
       </button>
 
-      <el-button class="top-bar__new" type="primary" :icon="Plus" @click="emit('new')">
+      <el-button
+        class="top-bar__new max-md:hidden!"
+        type="primary"
+        :icon="Plus"
+        @click="emit('new')"
+      >
         新建日程
       </el-button>
     </div>
   </header>
 </template>
-
-<style scoped>
-.top-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 18px;
-  min-height: 70px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--color-line);
-}
-
-.top-bar__identity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  margin-right: auto;
-}
-
-.top-bar__seal {
-  display: inline-flex;
-  flex: 0 0 34px;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  color: var(--color-surface);
-  font-family: var(--font-display);
-  font-size: 17px;
-  background: var(--color-focus);
-  border-radius: 10px;
-}
-
-.top-bar__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.top-bar__product {
-  color: var(--color-ink);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.top-bar__title {
-  overflow: hidden;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 600;
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.top-bar__nav,
-.top-bar__views,
-.top-bar__actions {
-  display: flex;
-  align-items: center;
-}
-
-.top-bar__nav {
-  gap: 4px;
-}
-
-.nav-button,
-.today-button,
-.view-button,
-.filter-button,
-.staging-button {
-  min-height: 38px;
-  padding: 0 11px;
-  color: var(--color-ink-secondary);
-  font-size: 13px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.staging-button {
-  position: relative;
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
-  padding: 0 10px;
-}
-
-.staging-button__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  color: var(--color-surface);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  background: var(--color-focus);
-  border-radius: 999px;
-}
-
-.nav-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  padding: 0;
-  font-size: 15px;
-}
-
-.nav-button:hover,
-.today-button:hover,
-.view-button:hover,
-.filter-button:hover,
-.staging-button:hover {
-  color: var(--color-ink);
-  background: var(--color-surface);
-  border-color: var(--color-line);
-}
-
-.nav-button:focus-visible,
-.today-button:focus-visible,
-.view-button:focus-visible,
-.filter-button:focus-visible,
-.staging-button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.top-bar__views {
-  gap: 2px;
-  padding: 3px;
-  background: rgb(223 215 200 / 42%);
-  border-radius: 10px;
-}
-
-.view-button {
-  min-width: 38px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 0;
-}
-
-.view-button.is-active {
-  color: var(--color-surface);
-  background: var(--color-ink);
-}
-
-.top-bar__actions {
-  gap: 6px;
-}
-
-.filter-button {
-  position: relative;
-}
-
-.filter-button.has-filter {
-  color: var(--color-focus);
-  border-color: var(--color-line-strong);
-}
-
-.filter-button__dot {
-  position: absolute;
-  top: 7px;
-  right: 6px;
-  width: 5px;
-  height: 5px;
-  background: var(--color-focus);
-  border-radius: 50%;
-}
-
-@media (max-width: 1279px) {
-  .top-bar {
-    padding: 10px 16px;
-  }
-
-  .top-bar__title {
-    font-size: 19px;
-  }
-}
-
-@media (max-width: 767px) {
-  .top-bar {
-    display: grid;
-    grid-template-areas:
-      'identity actions'
-      'nav nav'
-      'views views';
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px 8px;
-    padding: 10px 12px;
-    min-height: auto;
-  }
-
-  .top-bar__identity {
-    grid-area: identity;
-    margin-right: 0;
-  }
-
-  .top-bar__seal {
-    display: none;
-  }
-
-  .top-bar__product {
-    font-size: 11px;
-    color: var(--color-ink-muted);
-  }
-
-  .top-bar__title {
-    font-size: 18px;
-  }
-
-  .top-bar__nav {
-    grid-area: nav;
-    justify-self: start;
-    padding-top: 2px;
-  }
-
-  .nav-button,
-  .today-button {
-    min-height: 44px;
-  }
-
-  .top-bar__views {
-    grid-area: views;
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .view-button {
-    flex: 1;
-    min-height: 44px;
-  }
-
-  .top-bar__actions {
-    grid-area: actions;
-    position: static;
-    justify-self: end;
-  }
-
-  .top-bar__new {
-    display: none;
-  }
-
-  .filter-button {
-    min-height: 44px;
-  }
-}
-</style>

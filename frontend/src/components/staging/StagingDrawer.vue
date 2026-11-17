@@ -182,16 +182,20 @@ async function handleReject(item: StagedSchedule) {
     :with-header="false"
     class="staging-drawer"
   >
-    <div class="staging">
-      <header class="staging__header">
+    <div
+      class="staging flex h-full flex-col gap-3.5 overflow-y-auto px-5 pb-[calc(18px+env(safe-area-inset-bottom))] pt-[18px] max-md:px-3.5 max-md:pb-[calc(14px+env(safe-area-inset-bottom))] max-md:pt-3.5"
+    >
+      <header class="staging__header flex items-start justify-between gap-3">
         <div>
-          <p class="staging__eyebrow">暂存区</p>
-          <h2>待确认日程</h2>
-          <p class="staging__subtitle">自动来源先进入这里，确认后才会写入日历。</p>
+          <p class="staging__eyebrow mb-0.5 text-[11px] tracking-[0.12em] text-ink-muted">暂存区</p>
+          <h2 class="m-0 font-display text-[21px] font-semibold text-ink">待确认日程</h2>
+          <p class="staging__subtitle mt-[5px] text-xs leading-relaxed text-ink-muted">
+            自动来源先进入这里，确认后才会写入日历。
+          </p>
         </div>
         <button
           type="button"
-          class="staging__close"
+          class="staging__close inline-flex h-[34px] w-[34px] flex-[0_0_auto] cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
           aria-label="关闭暂存区"
           @click="visible = false"
         >
@@ -199,7 +203,7 @@ async function handleReject(item: StagedSchedule) {
         </button>
       </header>
 
-      <section class="source-cards">
+      <section class="source-cards flex flex-col gap-2.5">
         <SourceSyncCard
           title="GitHub 仓库更新"
           description="配置 GITHUB_USERNAME 后可同步最近 14 天仓库动态。"
@@ -232,7 +236,7 @@ async function handleReject(item: StagedSchedule) {
         show-icon
       />
 
-      <div class="staging__toolbar">
+      <div class="staging__toolbar flex items-center justify-between text-xs text-ink-muted">
         <span>{{ pendingItems.length }} 条待确认</span>
         <el-button
           v-if="pendingItems.length > 1"
@@ -253,8 +257,15 @@ async function handleReject(item: StagedSchedule) {
         show-icon
       />
 
-      <div v-if="store.stagingLoading && pendingItems.length === 0" class="staging__loading">
-        <span v-for="index in 3" :key="index"></span>
+      <div
+        v-if="store.stagingLoading && pendingItems.length === 0"
+        class="staging__loading flex flex-col gap-2.5"
+      >
+        <span
+          v-for="index in 3"
+          :key="index"
+          class="h-[92px] animate-pulse rounded-[10px] bg-canvas"
+        ></span>
       </div>
 
       <EmptyState
@@ -265,43 +276,61 @@ async function handleReject(item: StagedSchedule) {
         @action="handleEmptySync"
       />
 
-      <ol v-else class="staged-list">
-        <li v-for="item in pendingItems" :key="item.id" class="staged-item">
-          <div class="staged-item__top">
+      <ol v-else class="staged-list m-0 flex list-none flex-col gap-2.5 p-0">
+        <li
+          v-for="item in pendingItems"
+          :key="item.id"
+          class="staged-item rounded-[10px] border border-l-[3px] border-line border-l-line-strong bg-surface px-3.5 py-[13px]"
+        >
+          <div class="staged-item__top flex items-start gap-[9px]">
             <span
-              class="staged-item__marker"
-              :style="{
-                color: CATEGORY_META[item.category].color,
-                backgroundColor: CATEGORY_META[item.category].softColor,
-              }"
+              class="staged-item__marker inline-flex h-6 flex-[0_0_24px] items-center justify-center rounded-md text-[10px] font-bold"
+              :class="CATEGORY_META[item.category].badgeClass"
             >
               {{ CATEGORY_META[item.category].shortLabel }}
             </span>
-            <div class="staged-item__heading">
-              <div class="staged-item__badges">
-                <span class="source-badge">{{ sourceLabel(item.source) }}</span>
-                <span class="category-label">{{ CATEGORY_META[item.category].label }}</span>
+            <div class="staged-item__heading min-w-0">
+              <div class="staged-item__badges mb-[3px] flex flex-wrap items-center gap-1.5">
+                <span
+                  class="source-badge rounded-full border border-line bg-canvas px-[7px] py-px text-[10px] text-ink-secondary"
+                >
+                  {{ sourceLabel(item.source) }}
+                </span>
+                <span class="category-label text-[10px] text-ink-muted">
+                  {{ CATEGORY_META[item.category].label }}
+                </span>
               </div>
-              <h3>{{ item.title }}</h3>
+              <h3 class="m-0 break-words text-sm font-medium leading-[1.45] text-ink">
+                {{ item.title }}
+              </h3>
             </div>
           </div>
 
-          <p class="staged-item__time">{{ stagedTime(item) }}</p>
-          <p v-if="item.description" class="staged-item__description">
+          <p class="staged-item__time ml-[33px] mt-2 text-[11px] tabular-nums text-focus">
+            {{ stagedTime(item) }}
+          </p>
+          <p
+            v-if="item.description"
+            class="staged-item__description ml-[33px] mt-1.5 line-clamp-3 whitespace-pre-wrap text-[11px] leading-[1.65] text-ink-muted"
+          >
             {{ item.description }}
           </p>
 
-          <div class="staged-item__footer">
+          <div
+            class="staged-item__footer mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-dashed border-line pt-2"
+          >
             <a
               v-if="item.source_url"
               :href="item.source_url"
               target="_blank"
               rel="noreferrer"
-              class="staged-item__link"
+              class="staged-item__link text-[11px] text-ink-muted no-underline hover:text-focus hover:underline"
             >
               查看仓库
             </a>
-            <div class="staged-item__actions">
+            <div
+              class="staged-item__actions ml-auto flex flex-wrap gap-0.5 max-md:w-full max-md:justify-end"
+            >
               <el-button text :disabled="approvingId === item.id" @click="emit('edit', item)">
                 调整
               </el-button>
@@ -327,239 +356,3 @@ async function handleReject(item: StagedSchedule) {
     </div>
   </el-drawer>
 </template>
-
-<style scoped>
-.staging {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  height: 100%;
-  padding: 18px 20px env(safe-area-inset-bottom);
-  overflow-y: auto;
-}
-
-.staging__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.staging__eyebrow {
-  margin: 0 0 2px;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-}
-
-.staging__header h2 {
-  margin: 0;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 21px;
-  font-weight: 600;
-}
-
-.staging__subtitle {
-  margin: 5px 0 0;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.staging__close {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  color: var(--color-ink-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.staging__close:hover {
-  color: var(--color-ink);
-  background: var(--color-canvas);
-}
-
-.staging__close:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.source-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.staging__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-}
-
-.staging__loading {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.staging__loading span {
-  height: 92px;
-  background: var(--color-canvas);
-  border-radius: 10px;
-  animation: pulse 1.4s ease-in-out infinite;
-}
-
-.staged-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.staged-item {
-  padding: 13px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-left: 3px solid var(--color-line-strong);
-  border-radius: 10px;
-}
-
-.staged-item__top {
-  display: flex;
-  gap: 9px;
-  align-items: flex-start;
-}
-
-.staged-item__marker {
-  display: inline-flex;
-  flex: 0 0 24px;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 6px;
-}
-
-.staged-item__heading {
-  min-width: 0;
-}
-
-.staged-item__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-bottom: 3px;
-}
-
-.source-badge {
-  padding: 1px 7px;
-  color: var(--color-ink-secondary);
-  font-size: 10px;
-  background: var(--color-canvas);
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-}
-
-.category-label {
-  color: var(--color-ink-muted);
-  font-size: 10px;
-}
-
-.staged-item h3 {
-  margin: 0;
-  color: var(--color-ink);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.45;
-  word-break: break-word;
-}
-
-.staged-item__time {
-  margin: 8px 0 0 33px;
-  color: var(--color-focus);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.staged-item__description {
-  display: -webkit-box;
-  margin: 6px 0 0 33px;
-  overflow: hidden;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.staged-item__footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--color-line);
-}
-
-.staged-item__link {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  text-decoration: none;
-}
-
-.staged-item__link:hover {
-  color: var(--color-focus);
-  text-decoration: underline;
-}
-
-.staged-item__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  margin-left: auto;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.65;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .staging__loading span {
-    animation: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .staging {
-    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
-  }
-
-  .staged-item__actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-</style>

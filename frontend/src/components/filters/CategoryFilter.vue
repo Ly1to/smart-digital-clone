@@ -29,9 +29,14 @@ function showAll() {
 
 <template>
   <section class="category-filter" aria-label="分类筛选">
-    <div class="section-heading">
-      <h3>分类</h3>
-      <button v-if="!allSelected" type="button" class="text-action" @click="showAll">
+    <div class="section-heading mb-2 flex items-center justify-between">
+      <h3 class="m-0 text-xs font-semibold tracking-[0.08em] text-ink-secondary">分类</h3>
+      <button
+        v-if="!allSelected"
+        type="button"
+        class="text-action cursor-pointer rounded border-0 bg-transparent px-1 py-0.5 text-[11px] text-focus hover:underline"
+        @click="showAll"
+      >
         显示全部
       </button>
     </div>
@@ -40,120 +45,29 @@ function showAll() {
       v-for="category in ALL_CATEGORIES"
       :key="category"
       type="button"
-      class="category-option"
-      :class="{ 'is-active': store.filters.categories.includes(category) }"
+      class="category-option flex min-h-[38px] w-full cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-1 text-left text-ink-secondary transition hover:bg-surface hover:opacity-100 max-md:min-h-11"
+      :class="store.filters.categories.includes(category) ? 'is-active opacity-100' : 'opacity-50'"
       :aria-pressed="store.filters.categories.includes(category)"
       @click="toggleCategory(category)"
     >
       <span
-        class="category-option__dot"
-        :style="{ backgroundColor: CATEGORY_META[category].color }"
+        class="category-option__dot h-2 w-2 flex-[0_0_8px] rounded-full"
+        :class="CATEGORY_META[category].dotClass"
         aria-hidden="true"
       ></span>
-      <span class="category-option__label">{{ CATEGORY_META[category].label }}</span>
-      <span class="category-option__count">{{ counts[category] }}</span>
+      <span class="category-option__label flex-1 text-[13px]">
+        {{ CATEGORY_META[category].label }}
+      </span>
+      <span class="category-option__count text-[11px] tabular-nums text-ink-muted">
+        {{ counts[category] }}
+      </span>
     </button>
 
-    <p v-if="nothingSelected" class="category-filter__hint">未选择分类时显示全部日程</p>
+    <p
+      v-if="nothingSelected"
+      class="category-filter__hint mx-2 mt-1.5 text-[11px] leading-normal text-ink-muted"
+    >
+      未选择分类时显示全部日程
+    </p>
   </section>
 </template>
-
-<style scoped>
-.section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.section-heading h3 {
-  margin: 0;
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-
-.text-action {
-  padding: 2px 4px;
-  color: var(--color-focus);
-  font-size: 11px;
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.text-action:hover {
-  text-decoration: underline;
-}
-
-.text-action:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.category-option {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  min-height: 38px;
-  padding: 4px 8px;
-  color: var(--color-ink-secondary);
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  opacity: 0.5;
-  transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.category-option.is-active {
-  opacity: 1;
-}
-
-.category-option:hover {
-  opacity: 1;
-  background: var(--color-surface);
-}
-
-.category-option:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-.category-option__dot {
-  flex: 0 0 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.category-option__label {
-  flex: 1;
-  font-size: 13px;
-}
-
-.category-option__count {
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.category-filter__hint {
-  margin: 6px 8px 0;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-@media (max-width: 767px) {
-  .category-option {
-    min-height: 44px;
-  }
-}
-</style>

@@ -192,12 +192,14 @@ function openCreate(initialStart?: string, initialEnd?: string) {
   const baseDate =
     isMobile.value && mobileView.value === 'agenda' ? agendaDate.value : currentDate.value
   const base = dayjs(baseDate)
+  const nextHour = dayjs().add(1, 'hour').minute(0).second(0)
+  // 深夜创建时不要把默认时间跳到下一天，否则“今日安排”里看不到刚创建的日程。
+  const sameDayDefault = nextHour.isSame(base, 'day') ? nextHour : base.hour(23).minute(0).second(0)
   const start =
     initialStart ??
-    (base.isSame(dayjs(), 'day')
-      ? dayjs().add(1, 'hour').minute(0).second(0)
-      : base.hour(9).minute(0).second(0)
-    ).format('YYYY-MM-DDTHH:mm:ss')
+    (base.isSame(dayjs(), 'day') ? sameDayDefault : base.hour(9).minute(0).second(0)).format(
+      'YYYY-MM-DDTHH:mm:ss',
+    )
   const end = initialEnd ?? dayjs(start).add(1, 'hour').format('YYYY-MM-DDTHH:mm:ss')
 
   selected.value = null
@@ -508,42 +510,58 @@ async function handleStagedSave(payload: ScheduleInput) {
     </template>
 
     <template #sidebar>
-      <div v-if="isDesktop" class="sidebar">
+      <div v-if="isDesktop" class="sidebar flex flex-col gap-4 pr-0.5">
         <MiniCalendar :current-date="currentDate" @select="handleMiniSelect" />
         <CategoryFilter :day-date="agendaDate" />
         <MoreFilters :day-date="agendaDate" />
         <ThemeSwitcher />
         <AccountPanel />
-        <div v-if="store.hasActiveFilters" class="filter-summary">
-          <span>{{ store.activeFilterSummary }}</span>
-          <button type="button" @click="clearFilters">清除</button>
+        <div
+          v-if="store.hasActiveFilters"
+          class="filter-summary flex items-start justify-between gap-2 rounded-lg bg-canvas px-2.5 py-[9px] text-[11px] leading-relaxed text-ink-muted"
+        >
+          <span class="min-w-0">{{ store.activeFilterSummary }}</span>
+          <button
+            type="button"
+            class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[11px] text-danger hover:underline"
+            @click="clearFilters"
+          >
+            清除
+          </button>
         </div>
       </div>
     </template>
 
-    <div class="main-content">
+    <div class="main-content flex min-h-0 flex-1 flex-col">
       <el-alert
         v-if="activeError"
         :title="activeError"
         type="error"
         show-icon
         :closable="false"
-        class="main-alert"
+        class="mb-2.5 shrink-0"
       >
         <template #default>
           <el-button link type="primary" @click="retryLoad">重新加载</el-button>
         </template>
       </el-alert>
 
-      <section v-show="showCalendar" class="calendar-shell" aria-label="日历画布">
+      <section
+        v-show="showCalendar"
+        class="calendar-shell relative min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface max-md:rounded-[10px]"
+        aria-label="日历画布"
+      >
         <div
           v-if="store.loading && !store.initialized"
-          class="calendar-skeleton"
+          class="calendar-skeleton absolute inset-0 z-[5] overflow-hidden bg-surface p-3.5"
           aria-label="日历加载中"
         >
           <LoadingState />
         </div>
-        <div v-if="store.loading && store.initialized" class="loading-line"></div>
+        <div
+          v-if="store.loading && store.initialized"
+          class="loading-line absolute left-0 top-0 z-[6] h-0.5 w-[36%] animate-[loading-slide_1.2s_ease-in-out_infinite] bg-focus motion-reduce:w-full motion-reduce:animate-none motion-reduce:opacity-55"
+        ></div>
 
         <CalendarCanvas
           ref="calendarRef"
@@ -554,8 +572,11 @@ async function handleStagedSave(payload: ScheduleInput) {
           @event-click="openDetail"
         />
 
-        <div v-if="calendarEmpty" class="calendar-empty">
-          <p>
+        <div
+          v-if="calendarEmpty"
+          class="calendar-empty absolute left-1/2 top-[74px] z-[4] flex -translate-x-1/2 flex-col items-center gap-1 rounded-[10px] border border-line bg-[rgb(255_253_248/92%)] px-4 py-2 text-center text-xs text-ink-muted max-md:top-[62px] max-md:w-max max-md:max-w-[88%]"
+        >
+          <p class="m-0">
             {{ store.hasActiveFilters ? '没有符合筛选条件的日程' : '这个时间段还没有安排' }}
           </p>
           <el-button v-if="store.hasActiveFilters" text type="primary" @click="clearFilters">
@@ -564,7 +585,11 @@ async function handleStagedSave(payload: ScheduleInput) {
         </div>
       </section>
 
-      <section v-if="!showCalendar" class="agenda-shell" aria-label="当天日程">
+      <section
+        v-if="!showCalendar"
+        class="agenda-shell min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface max-md:rounded-[10px]"
+        aria-label="当天日程"
+      >
         <TodayAgenda
           :date="agendaDate"
           :schedules="store.daySchedules"
@@ -579,16 +604,26 @@ async function handleStagedSave(payload: ScheduleInput) {
     </div>
 
     <template #panel>
-      <div v-if="isDesktop" class="panel-content">
-        <div v-if="formMode" class="panel-form">
-          <header class="panel-form__header">
-            <h2>{{ formMode === 'edit' ? '编辑日程' : '新建日程' }}</h2>
-            <button type="button" aria-label="关闭表单" class="panel-close" @click="closeForm">
+      <div v-if="isDesktop" class="panel-content flex h-full min-h-0 flex-col">
+        <div v-if="formMode" class="panel-form flex h-full min-h-0 flex-col">
+          <header
+            class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-[18px] pb-2.5 pt-4"
+          >
+            <h2 class="m-0 font-display text-lg font-semibold text-ink">
+              {{ formMode === 'edit' ? '编辑日程' : '新建日程' }}
+            </h2>
+            <button
+              type="button"
+              aria-label="关闭表单"
+              class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+              @click="closeForm"
+            >
               <el-icon><Close /></el-icon>
             </button>
           </header>
           <ScheduleForm
             :key="formSessionKey"
+            class="flex-1 overflow-y-auto px-[18px] pb-[18px] pt-3.5"
             :initial="formInitial"
             :initial-start="formDraftStart"
             :initial-end="formDraftEnd"
@@ -627,14 +662,23 @@ async function handleStagedSave(payload: ScheduleInput) {
     :size="isMobile ? '74%' : '360px'"
     title="筛选"
   >
-    <div class="filter-drawer">
+    <div class="filter-drawer flex flex-col gap-3.5">
       <CategoryFilter :day-date="agendaDate" />
       <MoreFilters :day-date="agendaDate" />
       <ThemeSwitcher />
       <AccountPanel />
-      <div v-if="store.hasActiveFilters" class="filter-summary">
-        <span>{{ store.activeFilterSummary }}</span>
-        <button type="button" @click="clearFilters">清除</button>
+      <div
+        v-if="store.hasActiveFilters"
+        class="filter-summary flex items-start justify-between gap-2 rounded-lg bg-canvas px-2.5 py-[9px] text-[11px] leading-relaxed text-ink-muted"
+      >
+        <span class="min-w-0">{{ store.activeFilterSummary }}</span>
+        <button
+          type="button"
+          class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[11px] text-danger hover:underline"
+          @click="clearFilters"
+        >
+          清除
+        </button>
       </div>
     </div>
   </el-drawer>
@@ -669,15 +713,25 @@ async function handleStagedSave(payload: ScheduleInput) {
     :with-header="false"
     class="mobile-panel"
   >
-    <div v-if="formMode" class="panel-form">
-      <header class="panel-form__header">
-        <h2>{{ formMode === 'edit' ? '编辑日程' : '新建日程' }}</h2>
-        <button type="button" aria-label="关闭表单" class="panel-close" @click="closeForm">
+    <div v-if="formMode" class="panel-form flex h-full min-h-0 flex-col">
+      <header
+        class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-[18px] pb-2.5 pt-4"
+      >
+        <h2 class="m-0 font-display text-lg font-semibold text-ink">
+          {{ formMode === 'edit' ? '编辑日程' : '新建日程' }}
+        </h2>
+        <button
+          type="button"
+          aria-label="关闭表单"
+          class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+          @click="closeForm"
+        >
           <el-icon><Close /></el-icon>
         </button>
       </header>
       <ScheduleForm
         :key="formSessionKey"
+        class="flex-1 overflow-y-auto px-[18px] pb-[18px] pt-3.5"
         :initial="formInitial"
         :initial-start="formDraftStart"
         :initial-end="formDraftEnd"
@@ -699,255 +753,14 @@ async function handleStagedSave(payload: ScheduleInput) {
     />
   </el-drawer>
 
-  <button v-if="isMobile" type="button" class="fab" aria-label="新建日程" @click="openCreate()">
+  <button
+    v-if="isMobile"
+    type="button"
+    class="fab fixed bottom-[calc(18px+env(safe-area-inset-bottom))] right-[18px] z-30 inline-flex min-h-12 min-w-24 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-ink px-[18px] text-sm font-medium text-surface shadow-[0_8px_20px_rgb(55_46_35/18%)]"
+    aria-label="新建日程"
+    @click="openCreate()"
+  >
     <el-icon><Plus /></el-icon>
     <span>新建</span>
   </button>
 </template>
-
-<style scoped>
-.main-content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.main-alert {
-  flex: 0 0 auto;
-  margin-bottom: 10px;
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-right: 2px;
-}
-
-.calendar-shell {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
-}
-
-.calendar-skeleton {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  padding: 14px;
-  overflow: hidden;
-  background: var(--color-surface);
-}
-
-.loading-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 6;
-  width: 36%;
-  height: 2px;
-  background: var(--color-focus);
-  animation: loading-slide 1.2s ease-in-out infinite;
-}
-
-.calendar-empty {
-  position: absolute;
-  top: 74px;
-  left: 50%;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 16px;
-  color: var(--color-ink-muted);
-  font-size: 12px;
-  text-align: center;
-  background: rgb(255 253 248 / 92%);
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
-  transform: translateX(-50%);
-}
-
-.calendar-empty p {
-  margin: 0;
-}
-
-.agenda-shell {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
-}
-
-.panel-content,
-.mobile-panel :deep(.el-drawer__body) {
-  height: 100%;
-}
-
-.panel-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-:global(.el-drawer.staging-drawer .el-drawer__body) {
-  padding: 0;
-}
-
-.panel-form {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.panel-form__header {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 18px 10px;
-  border-bottom: 1px solid var(--color-line);
-}
-
-.panel-form__header h2 {
-  margin: 0;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.panel-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  color: var(--color-ink-muted);
-  background: transparent;
-  border: 0;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.panel-close:hover {
-  color: var(--color-ink);
-  background: var(--color-canvas);
-}
-
-.panel-close:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-.panel-form > :deep(.schedule-form) {
-  flex: 1;
-  padding: 14px 18px 18px;
-  overflow-y: auto;
-}
-
-.filter-drawer {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.filter-summary {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 10px;
-  color: var(--color-ink-muted);
-  font-size: 11px;
-  line-height: 1.6;
-  background: var(--color-canvas);
-  border-radius: 8px;
-}
-
-.filter-summary span {
-  min-width: 0;
-}
-
-.filter-summary button {
-  flex: 0 0 auto;
-  padding: 0;
-  color: var(--color-danger);
-  font-size: 11px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.filter-summary button:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-.fab {
-  position: fixed;
-  right: 18px;
-  bottom: calc(18px + env(safe-area-inset-bottom));
-  z-index: 30;
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-  min-width: 96px;
-  min-height: 48px;
-  padding: 0 18px;
-  color: var(--color-surface);
-  font-size: 14px;
-  font-weight: 500;
-  background: var(--color-ink);
-  border: 0;
-  border-radius: 999px;
-  box-shadow: 0 8px 20px rgb(55 46 35 / 18%);
-  cursor: pointer;
-}
-
-.fab:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
-@keyframes loading-slide {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(360%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loading-line {
-    width: 100%;
-    animation: none;
-    opacity: 0.55;
-  }
-}
-
-@media (max-width: 767px) {
-  .calendar-shell,
-  .agenda-shell {
-    border-radius: 10px;
-  }
-
-  .calendar-empty {
-    top: 62px;
-    width: max-content;
-    max-width: 88%;
-  }
-}
-</style>
