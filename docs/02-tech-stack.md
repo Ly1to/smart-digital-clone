@@ -42,6 +42,7 @@
 | 日历组件 | FullCalendar Vue 3 | 日、周、月视图及日程展示 |
 | 日期处理 | Day.js | 本地时间、UTC 转换和日期格式化 |
 | HTTP 客户端 | Axios | 前端调用 FastAPI 接口 |
+| 对话机器人 | DeepSeek（OpenAI 兼容）+ httpx | 自然语言查询日程，Phase 1 只读 |
 | 后端框架 | FastAPI | REST API、参数校验和 OpenAPI 文档 |
 | 数据校验 | Pydantic 2 | 请求、响应和配置模型 |
 | ORM | SQLAlchemy 2 | 日程持久化和查询 |
@@ -223,6 +224,8 @@ staged_schedules
 
 ```text
 GET    /api/health
+GET    /api/bot/status
+POST   /api/bot/chat
 
 GET    /api/auth/status
 POST   /api/auth/setup
@@ -425,6 +428,7 @@ JWT、密码哈希、GitHub / Gitee API 和 Pinia `auth` store 已随登录与�
 - ICS：后续增加独立的导入导出服务，不在 MVP API 中预留空接口
 - 第三方数据接入：必须单独设计授权、同步频率、数据来源和失败重试，不与手动创建接口混在一起
 - 多用户：已实现多账号登录、注册和数据隔离；团队共享、角色权限仍未规划
+- QQ 机器人：Phase 1 已完成对话内核和只读工具；OneBot v11 / NapCat 接入与账号绑定在 Phase 2 实现
 
 ## 11. 技术栈确认结论
 

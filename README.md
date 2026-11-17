@@ -2,7 +2,7 @@
 
 支持多账号、需要登录的个人日程系统。每个账号拥有独立的日程和暂存区，可完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选，并支持 GitHub 自动来源暂存区。
 
-当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，待一周试用反馈。
+当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，对话助手 Phase 1（DeepSeek + 只读日程工具）已接入，QQ 接入待实现。
 
 ## 目录
 
@@ -23,6 +23,7 @@ digital-clone/
       models/         # schedules ORM 模型与枚举
       schemas/        # Pydantic 请求/响应模型
       services/       # 业务规则与查询
+      bot/            # 对话助手：LLM Provider、日程工具与对话管道
     alembic/          # 数据库迁移
     tests/            # pytest API 测试
   frontend/
@@ -158,6 +159,9 @@ web (Nginx)
 | `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` | 否 | 首次启动自动创建管理员 |
 | `ALLOW_REGISTRATION` | 否 | 是否开放注册，默认 `true` |
 | `GITHUB_*` / `GITEE_*` | 否 | 自动来源同步配置，含义与 `backend/.env.example` 一致 |
+| `DEEPSEEK_API_KEY` | 否 | DeepSeek API Key；未配置时对话助手接口返回 503 |
+| `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | 否 | 默认 `https://api.deepseek.com` / `deepseek-chat` |
+| `QQ_BOT_ENABLED` | 否 | 是否启动 QQ 接入（Phase 2 实现），默认 `false` |
 
 注意：
 
@@ -211,11 +215,41 @@ uv run uvicorn app.main:app --reload --port 8000
 
 后台自动同步归属于第一个创建的管理员账号；其他账号手动点击同步时，暂存条目会写入自己的暂存区，不会看到彼此的日程。
 
+## 对话助手（Phase 1）
+
+后端内置只读的日程对话助手，默认使用 DeepSeek 的 OpenAI 兼容接口。当前阶段通过登录后的 HTTP 接口调试，QQ 接入在下一阶段完成。
+
+配置（本地 `backend/.env`，Docker 部署写在根目录 `.env`）：
+
+```env
+DEEPSEEK_API_KEY=sk-...
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+BOT_HISTORY_TURNS=6
+```
+
+未配置 `DEEPSEEK_API_KEY` 时，`/api/bot/chat` 返回 503，其他功能不受影响。
+
+```bash
+TOKEN=... # 登录后的 access_token
+curl -s -X POST http://127.0.0.1:8000/api/bot/chat \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"我今天有什么安排？"}'
+```
+
+- 当前支持查询时间区间、关键词搜索、单条详情和按天汇总；创建/修改/删除留到后续阶段
+- 工具只按当前登录账号过滤，不会返回其他账号的数据
+- 对话历史保存在进程内，重启后清空；传入 `conversation_id` 可延续同一会话
+- 完整设计、分步计划与 QQ 接入方式见 [对话机器人与 QQ 接入](./docs/06-qq-bot.md)
+
 ## API
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/health` | 健康检查（含数据库连通性与当前应用时区） |
+| GET | `/api/bot/status` | 对话助手配置状态 |
+| POST | `/api/bot/chat` | 与日程助手对话（需要登录） |
 | GET | `/api/auth/status` | 是否已创建管理员账号 |
 | POST | `/api/auth/setup` | 首次创建管理员账号 |
 | POST | `/api/auth/register` | 注册新账号（可通过环境变量关闭） |

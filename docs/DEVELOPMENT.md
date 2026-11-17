@@ -21,6 +21,8 @@
 | 按关键词、日期、分类、状态筛选 | 已实现 |
 | 多账号登录、注册与数据隔离 | 已实现 |
 | GitHub / Gitee 自动来源与暂存区 | 已实现 |
+| 对话助手（DeepSeek，只读查询日程） | Phase 1 已实现 |
+| QQ 机器人接入与账号绑定 | Phase 2 待实现 |
 | 三套主题色与响应式布局 | 已实现 |
 | 开始前提醒 | 未实现（P1） |
 | 每天、每周、每月重复日程 | 未实现（P1） |
@@ -107,6 +109,8 @@ tags、schedule_tags、recurrence_rule、remind_minutes 和 users.timezone 均�
 
 ```text
 GET    /api/health
+GET    /api/bot/status
+POST   /api/bot/chat
 
 GET    /api/auth/status
 POST   /api/auth/setup
@@ -256,6 +260,7 @@ MVP 稳定后继续增加：
 - 分享只读日程
 - AI 自动安排空余时间
 - 桌面端或 PWA 安装
+- QQ 机器人写操作与确认流程
 
 ## 12. 推荐实施顺序
 
