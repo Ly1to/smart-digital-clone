@@ -4,7 +4,7 @@
 
 当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，对话助手 Phase 1（DeepSeek + 只读日程工具）与 Phase 2（OneBot / QQ 接入、账号绑定）已完成。
 
-文档入口：[文档导航](./docs/README.md) · [API 参考](./docs/API.md) · [系统架构](./docs/ARCHITECTURE.md) · [部署运维](./docs/DEPLOYMENT.md) · [测试与质量](./docs/TESTING.md) · [路线图](./docs/ROADMAP.md)
+文档入口：[项目介绍](./intro/README.md) · [文档导航](./docs/README.md) · [API 参考](./docs/API.md) · [系统架构](./docs/ARCHITECTURE.md) · [部署运维](./docs/DEPLOYMENT.md) · [测试与质量](./docs/TESTING.md) · [路线图](./docs/ROADMAP.md)
 
 ## 目录
 
@@ -44,6 +44,7 @@ digital-clone/
     e2e/              # Playwright 主流程测试
   data/               # SQLite 数据文件（本地生成）
   docs/               # 文档导航、设计基线与 API/架构/部署/测试/路线图
+  intro/              # 项目介绍文档与前端截图
 ```
 
 ## 功能
