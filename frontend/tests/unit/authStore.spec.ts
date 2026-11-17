@@ -10,6 +10,7 @@ vi.mock('@/api/auth', () => ({
   fetchAuthStatus: vi.fn(),
   login: vi.fn(),
   setupAccount: vi.fn(),
+  register: vi.fn(),
   fetchMe: vi.fn(),
   logout: vi.fn(),
 }))
@@ -42,6 +43,17 @@ describe('auth store', () => {
     expect(auth.isAuthenticated).toBe(true)
     expect(auth.user?.username).toBe('owner')
     expect(auth.token).toBe('token-123')
+    expect(window.localStorage.getItem(AUTH_TOKEN_KEY)).toBe('token-123')
+  })
+
+  it('registers a new account and stores the session', async () => {
+    vi.mocked(authApi.register).mockResolvedValue(session)
+    const auth = useAuthStore()
+
+    await auth.register('owner', 'password-123')
+
+    expect(auth.isAuthenticated).toBe(true)
+    expect(auth.user?.username).toBe('owner')
     expect(window.localStorage.getItem(AUTH_TOKEN_KEY)).toBe('token-123')
   })
 

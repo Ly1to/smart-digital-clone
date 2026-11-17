@@ -52,7 +52,10 @@ export const useAuthStore = defineStore('auth', {
     applySession(token: string, user: AuthUser) {
       this.token = token
       this.user = user
-      this.status = { initialized: true }
+      this.status = {
+        initialized: true,
+        registration_enabled: this.status?.registration_enabled ?? true,
+      }
       this.initialized = true
       this.error = ''
       writeToken(token)
@@ -116,6 +119,20 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async register(username: string, password: string) {
+      this.loading = true
+      this.error = ''
+      try {
+        const response = await authApi.register(username, password)
+        this.applySession(response.access_token, response.user)
+      } catch (error) {
+        this.error = getErrorMessage(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     async logout() {
       try {
         if (this.token) {
@@ -125,7 +142,7 @@ export const useAuthStore = defineStore('auth', {
         // 本地退出优先，不受服务端或网络状态影响。
       } finally {
         this.clearSession()
-        this.status = this.status ?? { initialized: true }
+        this.status = this.status ?? { initialized: true, registration_enabled: true }
         this.error = ''
       }
     },

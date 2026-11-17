@@ -6,6 +6,7 @@ export interface AuthUser {
 
 export interface AuthStatus {
   initialized: boolean
+  registration_enabled: boolean
 }
 
 export interface TokenResponse {

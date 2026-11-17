@@ -19,6 +19,9 @@ const statusLoading = ref(true)
 const usernameRef = ref<InputInstance>()
 
 const isSetup = computed(() => mode.value === 'setup')
+const registrationEnabled = computed(() =>
+  Boolean(auth.status?.initialized && auth.status.registration_enabled),
+)
 const displayError = computed(() => localError.value || auth.error)
 
 function targetRoute(): string {
@@ -178,6 +181,13 @@ function toggleMode() {
           <button type="button" class="auth-link" @click="toggleMode">
             {{ isSetup ? '已有账号，去登录' : '首次使用？创建管理员账号' }}
           </button>
+          <RouterLink
+            v-if="registrationEnabled && !isSetup"
+            :to="{ name: 'register', query: route.query }"
+            class="auth-link"
+          >
+            没有账号？创建一个
+          </RouterLink>
           <button
             v-if="!isSetup"
             type="button"

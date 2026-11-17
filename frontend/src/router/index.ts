@@ -12,6 +12,12 @@ const router = createRouter({
       meta: { requiresAuth: false },
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+      meta: { requiresAuth: false },
+    },
+    {
       path: '/',
       name: 'calendar',
       component: () => import('@/views/CalendarView.vue'),
@@ -36,7 +42,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (to.name === 'login' && auth.isAuthenticated) {
+  if ((to.name === 'login' || to.name === 'register') && auth.isAuthenticated) {
     return { name: 'calendar' }
   }
 

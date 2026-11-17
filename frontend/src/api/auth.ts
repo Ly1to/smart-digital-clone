@@ -16,6 +16,11 @@ export async function setupAccount(username: string, password: string): Promise<
   return data
 }
 
+export async function register(username: string, password: string): Promise<TokenResponse> {
+  const { data } = await http.post<TokenResponse>('/auth/register', { username, password })
+  return data
+}
+
 export async function fetchMe(): Promise<AuthUser> {
   const { data } = await http.get<AuthUser>('/auth/me')
   return data
