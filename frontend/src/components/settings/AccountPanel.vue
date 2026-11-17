@@ -21,16 +21,17 @@ async function handleLogout() {
 </script>
 
 <template>
-  <section class="account-panel pt-0.5" aria-label="账号">
+  <section
+    class="account-panel rounded-2xl border border-line bg-surface p-3.5 shadow-soft"
+    aria-label="账号"
+  >
     <div class="account-panel__heading mb-2 flex items-center justify-between">
       <h3 class="m-0 text-xs font-semibold tracking-[0.08em] text-ink-secondary">账号</h3>
       <span class="text-[11px] text-ink-muted">已登录</span>
     </div>
-    <div
-      class="account-panel__body flex items-center gap-2 rounded-[9px] border border-line bg-surface px-[9px] py-2"
-    >
+    <div class="account-panel__body flex items-center gap-2 rounded-xl bg-canvas px-2.5 py-2">
       <span
-        class="account-panel__avatar inline-flex h-[26px] w-[26px] flex-[0_0_26px] items-center justify-center rounded-full bg-focus text-[11px] font-semibold text-surface"
+        class="account-panel__avatar inline-flex h-[26px] w-[26px] flex-[0_0_26px] items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-surface"
         aria-hidden="true"
       >
         {{ auth.user?.username.slice(0, 1).toUpperCase() }}

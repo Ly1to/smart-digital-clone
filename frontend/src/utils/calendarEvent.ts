@@ -44,7 +44,7 @@ export function renderEventContent(arg: EventContentArg): { domNodes: Node[] } {
   const root = document.createElement('div')
   root.className = [
     'schedule-event__content',
-    'flex min-w-0 items-start gap-1.5 overflow-hidden rounded-md border-l-[3px] px-1.5 py-[3px]',
+    'flex min-w-0 items-start gap-1.5 overflow-hidden rounded-[6px] border-l-[3px] px-1.5 py-[3px] shadow-[0_1px_1px_rgb(20_20_19/4%)] max-md:gap-0 max-md:border-l-2 max-md:px-1 max-md:py-0.5',
     categoryMeta.softClass,
     categoryMeta.borderClass,
     statusMeta.eventItemClass,
@@ -58,7 +58,7 @@ export function renderEventContent(arg: EventContentArg): { domNodes: Node[] } {
       'schedule-event__marker',
       'shrink-0 pt-px text-[10px] font-bold leading-[1.3]',
       categoryMeta.textClass,
-      isTimeGrid ? 'pt-0 text-[11px] leading-[1.2]' : '',
+      isTimeGrid ? 'pt-0 text-[11px] leading-[1.2]' : 'max-md:hidden',
     ]
       .filter(Boolean)
       .join(' '),
@@ -83,7 +83,7 @@ export function renderEventContent(arg: EventContentArg): { domNodes: Node[] } {
     createSpan(
       [
         'schedule-event__title',
-        'overflow-hidden text-[12px] font-medium leading-[1.35] text-ellipsis whitespace-nowrap max-md:text-[11px]',
+        'overflow-hidden text-[12px] font-medium leading-[1.35] text-ellipsis whitespace-nowrap max-md:text-[10px]',
         statusMeta.eventTitleClass,
       ].join(' '),
       arg.event.title,

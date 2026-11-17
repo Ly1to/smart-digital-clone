@@ -87,43 +87,49 @@ async function submit() {
 
 <template>
   <main
-    class="auth-page grid min-h-dvh place-items-center bg-canvas bg-[radial-gradient(circle_at_12%_10%,rgb(47_111_136/8%),transparent_28rem),radial-gradient(circle_at_92%_88%,rgb(138_90_68/7%),transparent_24rem)] px-4 py-7 max-md:items-start max-md:px-2.5 max-md:pt-[8vh]"
+    class="auth-page relative grid min-h-dvh place-items-center overflow-hidden bg-canvas bg-[radial-gradient(circle_at_50%_-8%,rgb(201_100_66/10%),transparent_34rem),radial-gradient(circle_at_88%_100%,rgb(20_20_19/4%),transparent_30rem)] px-4 py-10 max-md:items-start max-md:px-3 max-md:pt-[9vh]"
   >
     <section
-      class="auth-card w-[min(430px,100%)] rounded-2xl border border-line bg-surface px-[26px] pb-[18px] pt-6 shadow-card max-md:rounded-[13px] max-md:px-[18px] max-md:pb-3.5 max-md:pt-5"
+      class="auth-card relative z-10 w-[min(420px,100%)] rounded-[26px] border border-line bg-surface px-8 pb-6 pt-8 shadow-card max-md:rounded-3xl max-md:px-6 max-md:pb-5 max-md:pt-6"
       aria-labelledby="register-title"
     >
-      <div class="auth-brand mb-6 flex items-center gap-2.5">
+      <div class="auth-brand mb-7 flex items-center gap-3">
         <span
-          class="auth-seal inline-flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-focus font-display text-lg text-surface"
+          class="auth-seal inline-flex h-9 w-9 items-center justify-center rounded-[11px] bg-focus font-display text-[17px] text-surface shadow-[0_1px_2px_rgb(169_79_50/25%)]"
           aria-hidden="true"
         >
           日
         </span>
         <div class="flex flex-col gap-px">
-          <strong class="text-[13px] tracking-[0.04em] text-ink">个人日程</strong>
-          <span class="text-[11px] text-ink-muted">独立空间 · 私密日程</span>
+          <strong class="font-display text-[15px] font-semibold tracking-[0.01em] text-ink">
+            个人日程
+          </strong>
+          <span class="text-[11px] tracking-[0.02em] text-ink-muted">独立空间 · 私密日程</span>
         </div>
       </div>
 
-      <div v-if="statusLoading" class="auth-loading flex flex-col gap-2.5 py-5" role="status">
+      <div v-if="statusLoading" class="auth-loading flex flex-col gap-2.5 py-6" role="status">
         <span
           v-for="index in 3"
           :key="index"
-          class="h-[38px] animate-pulse rounded-lg bg-canvas"
+          class="h-[42px] animate-pulse rounded-[10px] bg-canvas"
         ></span>
       </div>
 
       <template v-else-if="!registrationEnabled">
         <div class="auth-heading">
-          <p class="auth-eyebrow mb-1 text-[11px] tracking-[0.12em] text-ink-muted">注册未开放</p>
+          <p
+            class="auth-eyebrow mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted"
+          >
+            注册未开放
+          </p>
           <h1
             id="register-title"
-            class="m-0 font-display text-[27px] font-semibold leading-[1.3] text-ink"
+            class="m-0 font-display text-[31px] font-semibold leading-[1.22] tracking-[-0.015em] text-ink"
           >
             当前部署不开放注册
           </h1>
-          <p class="auth-description mb-[18px] mt-2 text-xs leading-[1.7] text-ink-secondary">
+          <p class="auth-description mb-5 mt-3 text-[12.5px] leading-[1.75] text-ink-secondary">
             请联系管理员开通账号，或返回登录页使用已有账号。
           </p>
         </div>
@@ -133,11 +139,11 @@ async function submit() {
           type="error"
           :closable="false"
           show-icon
-          class="mb-3.5"
+          class="mb-4"
         />
         <RouterLink
           :to="{ name: 'login', query: route.query }"
-          class="text-xs text-focus hover:underline"
+          class="text-[12px] text-focus underline-offset-4 hover:underline"
         >
           返回登录
         </RouterLink>
@@ -145,14 +151,18 @@ async function submit() {
 
       <template v-else>
         <div class="auth-heading">
-          <p class="auth-eyebrow mb-1 text-[11px] tracking-[0.12em] text-ink-muted">创建账号</p>
+          <p
+            class="auth-eyebrow mb-2 text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted"
+          >
+            创建账号
+          </p>
           <h1
             id="register-title"
-            class="m-0 font-display text-[27px] font-semibold leading-[1.3] text-ink max-md:text-[23px]"
+            class="m-0 font-display text-[31px] font-semibold leading-[1.22] tracking-[-0.015em] text-ink max-md:text-[27px]"
           >
             注册你的日程空间
           </h1>
-          <p class="auth-description mb-[18px] mt-2 text-xs leading-[1.7] text-ink-secondary">
+          <p class="auth-description mb-5 mt-3 text-[12.5px] leading-[1.75] text-ink-secondary">
             每个账号拥有独立的日程和暂存区，登录后即可开始安排时间。
           </p>
         </div>
@@ -163,7 +173,7 @@ async function submit() {
           type="error"
           :closable="false"
           show-icon
-          class="mb-3.5"
+          class="mb-4"
         />
 
         <el-form label-position="top" class="auth-form" @submit.prevent="submit">
@@ -207,7 +217,7 @@ async function submit() {
 
           <el-button
             type="primary"
-            class="mt-0.5 min-h-[42px]! w-full"
+            class="mt-1.5 min-h-[44px]! w-full text-[13px]!"
             :loading="auth.loading"
             @click="submit"
           >
@@ -215,10 +225,10 @@ async function submit() {
           </el-button>
         </el-form>
 
-        <div class="auth-footer mt-4 flex flex-col items-start gap-1.5">
+        <div class="auth-footer mt-6 flex flex-col items-start gap-2">
           <RouterLink
             :to="{ name: 'login', query: route.query }"
-            class="text-xs text-focus hover:underline"
+            class="text-[12px] text-focus underline-offset-4 hover:underline"
           >
             已有账号，返回登录
           </RouterLink>
@@ -226,7 +236,7 @@ async function submit() {
       </template>
 
       <p
-        class="auth-note mt-[18px] border-t border-dashed border-line pt-3.5 text-[10px] text-ink-muted"
+        class="auth-note mt-6 border-t border-line pt-4 text-[10.5px] leading-relaxed text-ink-muted"
       >
         账号仅保存在当前部署的数据库中。
       </p>

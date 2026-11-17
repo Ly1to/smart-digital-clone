@@ -117,7 +117,7 @@ function selectDay(day: MiniDay) {
 
 <template>
   <section
-    class="mini-calendar rounded-xl border border-line bg-surface px-3.5 pb-3 pt-3.5"
+    class="mini-calendar rounded-2xl border border-line bg-surface p-3.5 shadow-soft"
     aria-label="小型月历"
   >
     <div class="mini-calendar__header mb-2.5 flex items-center justify-between gap-1.5">
@@ -148,7 +148,7 @@ function selectDay(day: MiniDay) {
     </div>
 
     <div
-      class="mini-calendar__weekdays mb-1 grid grid-cols-7 text-center text-[10px] text-ink-muted"
+      class="mini-calendar__weekdays mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.08em] text-ink-muted"
       aria-hidden="true"
     >
       <span v-for="label in weekdayLabels" :key="label">{{ label }}</span>
@@ -163,9 +163,10 @@ function selectDay(day: MiniDay) {
         class="mini-calendar__day relative flex h-8 min-w-0 cursor-pointer flex-col items-center justify-center rounded-[7px] border-0 p-0 hover:bg-canvas max-md:h-11"
         :class="[
           day.isSelected
-            ? 'is-selected bg-canvas shadow-[inset_0_0_0_1px_var(--color-line-strong)]'
-            : 'bg-transparent',
-          !day.inMonth ? 'is-outside text-ink-muted opacity-55' : 'text-ink-secondary',
+            ? 'is-selected bg-ink text-surface shadow-[0_1px_3px_rgb(20_20_19/20%)]'
+            : !day.inMonth
+              ? 'is-outside bg-transparent text-ink-muted opacity-55'
+              : 'bg-transparent text-ink-secondary',
           { 'is-today': day.isToday },
         ]"
         :aria-label="day.key"
@@ -174,7 +175,7 @@ function selectDay(day: MiniDay) {
       >
         <span
           class="mini-calendar__number text-[11px] leading-none tabular-nums"
-          :class="day.isToday ? 'font-bold text-focus' : ''"
+          :class="day.isToday && !day.isSelected ? 'font-bold text-focus' : ''"
         >
           {{ day.day }}
         </span>

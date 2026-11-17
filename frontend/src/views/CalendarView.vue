@@ -510,7 +510,7 @@ async function handleStagedSave(payload: ScheduleInput) {
     </template>
 
     <template #sidebar>
-      <div v-if="isDesktop" class="sidebar flex flex-col gap-4 pr-0.5">
+      <div v-if="isDesktop" class="sidebar flex flex-col gap-3.5 pr-0.5">
         <MiniCalendar :current-date="currentDate" @select="handleMiniSelect" />
         <CategoryFilter :day-date="agendaDate" />
         <MoreFilters :day-date="agendaDate" />
@@ -518,7 +518,7 @@ async function handleStagedSave(payload: ScheduleInput) {
         <AccountPanel />
         <div
           v-if="store.hasActiveFilters"
-          class="filter-summary flex items-start justify-between gap-2 rounded-lg bg-canvas px-2.5 py-[9px] text-[11px] leading-relaxed text-ink-muted"
+          class="filter-summary flex items-start justify-between gap-2 rounded-xl border border-line bg-canvas px-3 py-2.5 text-[11px] leading-relaxed text-ink-muted"
         >
           <span class="min-w-0">{{ store.activeFilterSummary }}</span>
           <button
@@ -548,7 +548,7 @@ async function handleStagedSave(payload: ScheduleInput) {
 
       <section
         v-show="showCalendar"
-        class="calendar-shell relative min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface max-md:rounded-[10px]"
+        class="calendar-shell relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-line bg-surface shadow-soft max-md:rounded-[14px]"
         aria-label="日历画布"
       >
         <div
@@ -574,7 +574,7 @@ async function handleStagedSave(payload: ScheduleInput) {
 
         <div
           v-if="calendarEmpty"
-          class="calendar-empty absolute left-1/2 top-[74px] z-[4] flex -translate-x-1/2 flex-col items-center gap-1 rounded-[10px] border border-line bg-[rgb(255_253_248/92%)] px-4 py-2 text-center text-xs text-ink-muted max-md:top-[62px] max-md:w-max max-md:max-w-[88%]"
+          class="calendar-empty absolute left-1/2 top-[74px] z-[4] flex -translate-x-1/2 flex-col items-center gap-1 rounded-full border border-line bg-surface/95 px-4 py-2 text-center text-xs text-ink-muted shadow-soft max-md:top-[62px] max-md:w-max max-md:max-w-[88%]"
         >
           <p class="m-0">
             {{ store.hasActiveFilters ? '没有符合筛选条件的日程' : '这个时间段还没有安排' }}
@@ -587,7 +587,7 @@ async function handleStagedSave(payload: ScheduleInput) {
 
       <section
         v-if="!showCalendar"
-        class="agenda-shell min-h-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface max-md:rounded-[10px]"
+        class="agenda-shell min-h-0 flex-1 overflow-hidden rounded-2xl border border-line bg-surface shadow-soft max-md:rounded-[14px]"
         aria-label="当天日程"
       >
         <TodayAgenda
@@ -607,15 +607,15 @@ async function handleStagedSave(payload: ScheduleInput) {
       <div v-if="isDesktop" class="panel-content flex h-full min-h-0 flex-col">
         <div v-if="formMode" class="panel-form flex h-full min-h-0 flex-col">
           <header
-            class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-[18px] pb-2.5 pt-4"
+            class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-5 pb-3 pt-4"
           >
-            <h2 class="m-0 font-display text-lg font-semibold text-ink">
+            <h2 class="m-0 font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">
               {{ formMode === 'edit' ? '编辑日程' : '新建日程' }}
             </h2>
             <button
               type="button"
               aria-label="关闭表单"
-              class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+              class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
               @click="closeForm"
             >
               <el-icon><Close /></el-icon>
@@ -623,7 +623,7 @@ async function handleStagedSave(payload: ScheduleInput) {
           </header>
           <ScheduleForm
             :key="formSessionKey"
-            class="flex-1 overflow-y-auto px-[18px] pb-[18px] pt-3.5"
+            class="flex-1 overflow-y-auto px-5 pb-5 pt-4"
             :initial="formInitial"
             :initial-start="formDraftStart"
             :initial-end="formDraftEnd"
@@ -669,7 +669,7 @@ async function handleStagedSave(payload: ScheduleInput) {
       <AccountPanel />
       <div
         v-if="store.hasActiveFilters"
-        class="filter-summary flex items-start justify-between gap-2 rounded-lg bg-canvas px-2.5 py-[9px] text-[11px] leading-relaxed text-ink-muted"
+        class="filter-summary flex items-start justify-between gap-2 rounded-xl border border-line bg-canvas px-3 py-2.5 text-[11px] leading-relaxed text-ink-muted"
       >
         <span class="min-w-0">{{ store.activeFilterSummary }}</span>
         <button
@@ -715,15 +715,15 @@ async function handleStagedSave(payload: ScheduleInput) {
   >
     <div v-if="formMode" class="panel-form flex h-full min-h-0 flex-col">
       <header
-        class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-[18px] pb-2.5 pt-4"
+        class="panel-form__header flex shrink-0 items-center justify-between border-b border-line px-5 pb-3 pt-4"
       >
-        <h2 class="m-0 font-display text-lg font-semibold text-ink">
+        <h2 class="m-0 font-display text-[19px] font-semibold tracking-[-0.01em] text-ink">
           {{ formMode === 'edit' ? '编辑日程' : '新建日程' }}
         </h2>
         <button
           type="button"
           aria-label="关闭表单"
-          class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+          class="panel-close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
           @click="closeForm"
         >
           <el-icon><Close /></el-icon>
@@ -731,7 +731,7 @@ async function handleStagedSave(payload: ScheduleInput) {
       </header>
       <ScheduleForm
         :key="formSessionKey"
-        class="flex-1 overflow-y-auto px-[18px] pb-[18px] pt-3.5"
+        class="flex-1 overflow-y-auto px-5 pb-5 pt-4"
         :initial="formInitial"
         :initial-start="formDraftStart"
         :initial-end="formDraftEnd"
@@ -756,7 +756,7 @@ async function handleStagedSave(payload: ScheduleInput) {
   <button
     v-if="isMobile"
     type="button"
-    class="fab fixed bottom-[calc(18px+env(safe-area-inset-bottom))] right-[18px] z-30 inline-flex min-h-12 min-w-24 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-ink px-[18px] text-sm font-medium text-surface shadow-[0_8px_20px_rgb(55_46_35/18%)]"
+    class="fab fixed bottom-[calc(18px+env(safe-area-inset-bottom))] right-[18px] z-30 inline-flex min-h-12 min-w-24 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-ink px-5 text-[13px] font-medium text-surface shadow-[0_10px_28px_rgb(20_20_19/22%)] transition-transform hover:-translate-y-0.5"
     aria-label="新建日程"
     @click="openCreate()"
   >

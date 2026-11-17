@@ -33,7 +33,7 @@ function sourceLabel(source: string): string {
 </script>
 
 <template>
-  <article class="detail-panel flex h-full min-h-0 flex-col overflow-y-auto p-[18px]">
+  <article class="detail-panel flex h-full min-h-0 flex-col overflow-y-auto p-5">
     <header class="detail-panel__header flex items-start justify-between gap-2.5">
       <div class="detail-panel__heading flex flex-wrap items-center gap-2">
         <span
@@ -54,7 +54,7 @@ function sourceLabel(source: string): string {
       </div>
       <button
         type="button"
-        class="detail-panel__close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-[7px] border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
+        class="detail-panel__close inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-ink-muted hover:bg-canvas hover:text-ink"
         aria-label="关闭日程详情"
         @click="emit('close')"
       >
@@ -63,7 +63,7 @@ function sourceLabel(source: string): string {
     </header>
 
     <h2
-      class="detail-panel__title mb-1.5 mt-3.5 break-words text-[22px] font-semibold leading-[1.35]"
+      class="detail-panel__title mb-2 mt-4 break-words font-display text-[24px] font-semibold leading-[1.3] tracking-[-0.01em]"
       :class="STATUS_META[schedule.status].titleClass"
     >
       {{ schedule.title }}
@@ -133,7 +133,7 @@ function sourceLabel(source: string): string {
       <el-button type="primary" :icon="EditPen" @click="emit('edit')">编辑</el-button>
       <button
         type="button"
-        class="detail-panel__delete cursor-pointer border-0 bg-transparent p-0 text-xs text-danger hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+        class="detail-panel__delete cursor-pointer border-0 bg-transparent p-0 text-xs text-danger underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="deleting"
         @click="emit('delete')"
       >

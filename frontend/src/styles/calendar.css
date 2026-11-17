@@ -1,8 +1,8 @@
 /* FullCalendar 由第三方组件直接渲染 DOM，保留必要的全局主题覆盖。 */
 .fc {
-  --fc-border-color: var(--color-line);
+  --fc-border-color: #eee9de;
   --fc-page-bg-color: var(--color-surface);
-  --fc-neutral-bg-color: var(--color-surface-raised);
+  --fc-neutral-bg-color: var(--color-canvas);
   --fc-neutral-text-color: var(--color-ink-muted);
   --fc-today-bg-color: var(--color-today);
   --fc-now-indicator-color: var(--color-now);
@@ -26,10 +26,11 @@
 }
 
 .fc .fc-col-header-cell-cushion {
-  padding: 8px 4px;
-  color: var(--color-ink-secondary);
-  font-size: 12px;
-  font-weight: 500;
+  padding: 10px 4px;
+  color: var(--color-ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-decoration: none;
 }
 
@@ -42,9 +43,14 @@
   text-decoration: none;
 }
 
+.fc .fc-daygrid-day-number {
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
 .fc .fc-daygrid-day-top {
   flex-direction: row;
-  padding: 2px 4px;
+  padding: 2px 3px;
 }
 
 .fc .fc-day-other .fc-daygrid-day-number {
@@ -52,7 +58,15 @@
 }
 
 .fc .fc-daygrid-day-frame {
-  min-height: 74px;
+  min-height: 78px;
+}
+
+.fc .fc-day-today {
+  background: var(--color-today);
+}
+
+.fc .fc-timegrid-col.fc-day-today {
+  background: rgb(244 238 227 / 55%);
 }
 
 .fc .fc-daygrid-day-events {
@@ -65,8 +79,23 @@
 }
 
 .fc .fc-event {
-  margin: 2px 3px;
+  margin: 2px 4px;
   cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .fc .fc-event {
+    margin: 2px 2px;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 62px;
+  }
+}
+
+.fc .fc-event:hover .schedule-event__content {
+  filter: brightness(0.985);
+  box-shadow: 0 2px 6px rgb(20 20 19 / 8%);
 }
 
 .fc .fc-event:focus-visible {

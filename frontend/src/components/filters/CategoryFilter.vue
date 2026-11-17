@@ -28,7 +28,10 @@ function showAll() {
 </script>
 
 <template>
-  <section class="category-filter" aria-label="分类筛选">
+  <section
+    class="category-filter rounded-2xl border border-line bg-surface p-3.5 shadow-soft"
+    aria-label="分类筛选"
+  >
     <div class="section-heading mb-2 flex items-center justify-between">
       <h3 class="m-0 text-xs font-semibold tracking-[0.08em] text-ink-secondary">分类</h3>
       <button
@@ -45,7 +48,7 @@ function showAll() {
       v-for="category in ALL_CATEGORIES"
       :key="category"
       type="button"
-      class="category-option flex min-h-[38px] w-full cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-1 text-left text-ink-secondary transition hover:bg-surface hover:opacity-100 max-md:min-h-11"
+      class="category-option flex min-h-[38px] w-full cursor-pointer items-center gap-2.5 rounded-full border border-transparent px-2.5 py-1 text-left text-ink-secondary transition-colors hover:bg-canvas hover:opacity-100 max-md:min-h-11"
       :class="store.filters.categories.includes(category) ? 'is-active opacity-100' : 'opacity-50'"
       :aria-pressed="store.filters.categories.includes(category)"
       @click="toggleCategory(category)"

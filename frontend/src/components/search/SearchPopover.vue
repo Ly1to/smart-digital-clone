@@ -132,7 +132,7 @@ defineExpose({ focusSearch: openSearch, closeSearch })
   <div ref="rootRef" class="search-popover relative">
     <button
       type="button"
-      class="icon-button inline-flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-lg border bg-transparent p-0 text-[17px] text-ink-secondary transition-colors hover:border-line hover:bg-surface max-md:h-11 max-md:w-11"
+      class="icon-button inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border bg-transparent p-0 text-[16px] text-ink-secondary transition-colors hover:border-line hover:bg-surface hover:shadow-soft max-md:h-11 max-md:w-11"
       :class="open ? 'is-active border-line bg-surface' : 'border-transparent'"
       aria-label="搜索日程"
       title="搜索日程（/）"
@@ -143,7 +143,7 @@ defineExpose({ focusSearch: openSearch, closeSearch })
 
     <div
       v-if="open"
-      class="search-panel absolute right-0 top-[calc(100%+10px)] z-50 w-[400px] max-w-[calc(100vw-24px)] animate-[panel-in_0.16s_ease] rounded-[14px] border border-line bg-surface-raised p-3.5 shadow-popover max-md:fixed max-md:left-3 max-md:right-3 max-md:top-[66px] max-md:w-auto max-md:max-w-none"
+      class="search-panel absolute right-0 top-[calc(100%+10px)] z-50 w-[400px] max-w-[calc(100vw-24px)] animate-[panel-in_0.16s_ease] rounded-2xl border border-line bg-surface-raised p-3.5 shadow-popover max-md:fixed max-md:left-3 max-md:right-3 max-md:top-[66px] max-md:w-auto max-md:max-w-none"
       role="dialog"
       aria-label="搜索日程"
     >
@@ -198,7 +198,7 @@ defineExpose({ focusSearch: openSearch, closeSearch })
               v-for="item in group.items"
               :key="item.id"
               type="button"
-              class="search-result flex w-full cursor-pointer items-start gap-2.5 rounded-lg border-0 bg-transparent px-2 py-[9px] text-left hover:bg-canvas max-md:min-h-11"
+              class="search-result flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-0 bg-transparent px-2 py-2.5 text-left transition-colors hover:bg-canvas max-md:min-h-11"
               @click="selectSchedule(item)"
             >
               <span

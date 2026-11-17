@@ -19,8 +19,8 @@ export const CATEGORY_META: Record<ScheduleCategory, CategoryMeta> = {
   work: {
     label: '工作',
     shortLabel: '工',
-    color: '#356e84',
-    softColor: '#e7eff2',
+    color: '#3f6c7d',
+    softColor: '#e9eff1',
     dotClass: 'bg-work',
     textClass: 'text-work',
     softClass: 'bg-work-soft',
@@ -31,8 +31,8 @@ export const CATEGORY_META: Record<ScheduleCategory, CategoryMeta> = {
   outing: {
     label: '外出',
     shortLabel: '外',
-    color: '#bc6745',
-    softColor: '#f6e8e0',
+    color: '#c96442',
+    softColor: '#f9ede6',
     dotClass: 'bg-outing',
     textClass: 'text-outing',
     softClass: 'bg-outing-soft',
@@ -43,8 +43,8 @@ export const CATEGORY_META: Record<ScheduleCategory, CategoryMeta> = {
   private: {
     label: '私人时间',
     shortLabel: '私',
-    color: '#75608a',
-    softColor: '#eee9f2',
+    color: '#7b6690',
+    softColor: '#f0ebf5',
     dotClass: 'bg-private',
     textClass: 'text-private',
     softClass: 'bg-private-soft',

@@ -30,9 +30,9 @@ function clearAll() {
 </script>
 
 <template>
-  <details class="more-filters border-t border-line">
+  <details class="more-filters rounded-2xl border border-line bg-surface px-3 py-0.5 shadow-soft">
     <summary
-      class="relative cursor-pointer list-none px-1 pb-2 pt-3 text-xs font-semibold tracking-[0.08em] text-ink-secondary after:absolute after:right-0 after:font-normal after:text-ink-muted after:content-['+'] open:after:content-['−'] [&::-webkit-details-marker]:hidden"
+      class="relative cursor-pointer list-none px-0.5 pb-2 pt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-secondary after:absolute after:right-0 after:font-normal after:text-ink-muted after:content-['+'] open:after:content-['−'] [&::-webkit-details-marker]:hidden"
     >
       更多筛选
     </summary>

@@ -8,15 +8,15 @@ export interface ThemeDefinition {
   softColor: string
 }
 
-export const DEFAULT_THEME: ThemeId = 'teal'
+export const DEFAULT_THEME: ThemeId = 'ochre'
 
 export const THEMES: ThemeDefinition[] = [
   {
     id: 'teal',
     label: '青墨',
-    description: '默认主题，安静克制',
-    color: '#2f6f88',
-    softColor: '#e8eff2',
+    description: '安静克制的蓝绿',
+    color: '#3d6b7d',
+    softColor: '#ecf1f3',
   },
   {
     id: 'moss',
@@ -28,9 +28,9 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'ochre',
     label: '赭石',
-    description: '温暖沉稳，偏陶土棕',
-    color: '#8a5a44',
-    softColor: '#f4ece7',
+    description: '默认主题，陶土红，接近 Claude 配色',
+    color: '#c96442',
+    softColor: '#f9ece6',
   },
 ]
 

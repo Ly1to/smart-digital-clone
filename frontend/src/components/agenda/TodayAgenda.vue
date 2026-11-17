@@ -36,13 +36,17 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
 <template>
   <section class="agenda flex h-full min-h-0 flex-col" aria-label="当天日程">
     <header
-      class="agenda__header flex items-start justify-between gap-3 border-b border-line px-[18px] pb-3.5 pt-[18px]"
+      class="agenda__header flex items-start justify-between gap-3 border-b border-line px-5 pb-4 pt-5"
     >
       <div>
-        <p class="agenda__eyebrow mb-1 text-[11px] tracking-[0.1em] text-ink-muted">
+        <p
+          class="agenda__eyebrow mb-1.5 text-[10px] font-medium uppercase tracking-[0.2em] text-ink-muted"
+        >
           {{ isToday ? '今日安排' : '当天安排' }}
         </p>
-        <h2 class="m-0 font-display text-[19px] font-semibold text-ink">
+        <h2
+          class="m-0 font-display text-[21px] font-semibold leading-tight tracking-[-0.01em] text-ink"
+        >
           {{ formatDayTitle(props.date) }}
         </h2>
       </div>
@@ -50,13 +54,13 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
         <button
           v-if="props.showStagingButton"
           type="button"
-          class="agenda__staging inline-flex min-h-[30px] cursor-pointer items-center gap-[5px] rounded-full border border-line bg-canvas px-2.5 text-[11px] text-focus"
+          class="agenda__staging inline-flex min-h-[30px] cursor-pointer items-center gap-[5px] rounded-full border border-outing/25 bg-outing-soft px-2.5 text-[11px] text-outing transition-colors hover:border-outing/45"
           @click="emit('openStaging')"
         >
           暂存
           <span
             v-if="props.pendingCount"
-            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-focus text-[9px] text-surface"
+            class="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-outing text-[9px] text-surface"
           >
             {{ props.pendingCount }}
           </span>
@@ -87,17 +91,17 @@ const isToday = computed(() => dayjs(props.date).isSame(dayjs(), 'day'))
       <li v-for="item in items" :key="item.id">
         <button
           type="button"
-          class="agenda-item flex w-full cursor-pointer items-start gap-[9px] rounded-[7px] border-0 border-b border-dashed border-line bg-transparent px-2 py-2.5 text-left hover:bg-canvas"
+          class="agenda-item flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-0 bg-transparent px-2.5 py-3 text-left transition-colors hover:bg-canvas"
           :class="[STATUS_META[item.status].className, STATUS_META[item.status].itemClass]"
           @click="emit('select', item)"
         >
           <span
-            class="agenda-item__time flex-[0_0_40px] pt-0.5 text-xs tabular-nums text-ink-muted"
+            class="agenda-item__time flex-[0_0_42px] pt-0.5 text-[11px] tabular-nums text-ink-muted"
           >
             {{ formatAgendaTime(item) }}
           </span>
           <span
-            class="agenda-item__marker inline-flex h-[22px] flex-[0_0_22px] items-center justify-center rounded-md text-[10px] font-semibold"
+            class="agenda-item__marker inline-flex h-6 flex-[0_0_24px] items-center justify-center rounded-lg text-[10px] font-semibold"
             :class="CATEGORY_META[item.category].badgeClass"
             aria-hidden="true"
           >

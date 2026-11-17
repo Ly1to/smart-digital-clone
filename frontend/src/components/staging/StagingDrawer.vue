@@ -280,7 +280,7 @@ async function handleReject(item: StagedSchedule) {
         <li
           v-for="item in pendingItems"
           :key="item.id"
-          class="staged-item rounded-[10px] border border-l-[3px] border-line border-l-line-strong bg-surface px-3.5 py-[13px]"
+          class="staged-item rounded-xl border border-l-[3px] border-line border-l-line-strong bg-surface px-3.5 py-3.5 shadow-[0_1px_2px_rgb(20_20_19/3%)]"
         >
           <div class="staged-item__top flex items-start gap-[9px]">
             <span

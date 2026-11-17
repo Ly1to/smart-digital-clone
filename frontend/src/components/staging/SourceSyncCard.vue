@@ -19,7 +19,7 @@ const emit = defineEmits<{
 
 <template>
   <section
-    class="source-card flex flex-col gap-2.5 rounded-[11px] border border-line bg-canvas px-3.5 py-[13px]"
+    class="source-card flex flex-col gap-2.5 rounded-xl border border-line bg-canvas px-3.5 py-3.5"
   >
     <div class="source-card__heading flex items-start justify-between gap-3">
       <div>
