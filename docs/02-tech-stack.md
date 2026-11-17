@@ -226,6 +226,9 @@ staged_schedules
 GET    /api/health
 GET    /api/bot/status
 POST   /api/bot/chat
+POST   /api/bot/bind-code
+GET    /api/bot/bindings
+DELETE /api/bot/bindings/{id}
 
 GET    /api/auth/status
 POST   /api/auth/setup
@@ -428,7 +431,7 @@ JWT、密码哈希、GitHub / Gitee API 和 Pinia `auth` store 已随登录与�
 - ICS：后续增加独立的导入导出服务，不在 MVP API 中预留空接口
 - 第三方数据接入：必须单独设计授权、同步频率、数据来源和失败重试，不与手动创建接口混在一起
 - 多用户：已实现多账号登录、注册和数据隔离；团队共享、角色权限仍未规划
-- QQ 机器人：Phase 1 已完成对话内核和只读工具；OneBot v11 / NapCat 接入与账号绑定在 Phase 2 实现
+- QQ 机器人：Phase 1 完成对话内核和只读工具，Phase 2 完成 OneBot v11 / NapCat 接入、绑定码和账号绑定；写操作与确认在 Phase 3 实现
 
 ## 11. 技术栈确认结论
 

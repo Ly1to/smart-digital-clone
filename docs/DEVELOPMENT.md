@@ -22,7 +22,7 @@
 | 多账号登录、注册与数据隔离 | 已实现 |
 | GitHub / Gitee 自动来源与暂存区 | 已实现 |
 | 对话助手（DeepSeek，只读查询日程） | Phase 1 已实现 |
-| QQ 机器人接入与账号绑定 | Phase 2 待实现 |
+| QQ 机器人接入与账号绑定 | Phase 2 已实现 |
 | 三套主题色与响应式布局 | 已实现 |
 | 开始前提醒 | 未实现（P1） |
 | 每天、每周、每月重复日程 | 未实现（P1） |
@@ -111,6 +111,9 @@ tags、schedule_tags、recurrence_rule、remind_minutes 和 users.timezone 均�
 GET    /api/health
 GET    /api/bot/status
 POST   /api/bot/chat
+POST   /api/bot/bind-code
+GET    /api/bot/bindings
+DELETE /api/bot/bindings/{id}
 
 GET    /api/auth/status
 POST   /api/auth/setup

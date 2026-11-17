@@ -2,7 +2,7 @@
 
 支持多账号、需要登录的个人日程系统。每个账号拥有独立的日程和暂存区，可完成工作、外出、私人时间三类日程的手动创建、查看、编辑、删除、搜索和筛选，并支持 GitHub 自动来源暂存区。
 
-当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，对话助手 Phase 1（DeepSeek + 只读日程工具）已接入，QQ 接入待实现。
+当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，对话助手 Phase 1（DeepSeek + 只读日程工具）与 Phase 2（OneBot / QQ 接入、账号绑定）已完成。
 
 ## 目录
 
@@ -161,7 +161,10 @@ web (Nginx)
 | `GITHUB_*` / `GITEE_*` | 否 | 自动来源同步配置，含义与 `backend/.env.example` 一致 |
 | `DEEPSEEK_API_KEY` | 否 | DeepSeek API Key；未配置时对话助手接口返回 503 |
 | `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | 否 | 默认 `https://api.deepseek.com` / `deepseek-chat` |
-| `QQ_BOT_ENABLED` | 否 | 是否启动 QQ 接入（Phase 2 实现），默认 `false` |
+| `QQ_BOT_ENABLED` | 否 | 是否启动 QQ 接入，默认 `false` |
+| `ONEBOT_WS_URL` / `ONEBOT_ACCESS_TOKEN` | 否 | NapCat / OneBot v11 的 WebSocket 地址与访问令牌 |
+| `QQ_BOT_ALLOWED_USERS` / `QQ_BOT_ALLOWED_GROUPS` | 否 | 逗号分隔白名单，留空表示不限制 |
+| `QQ_BIND_CODE_TTL_SECONDS` | 否 | 绑定码有效期，默认 600 秒 |
 
 注意：
 
@@ -215,9 +218,11 @@ uv run uvicorn app.main:app --reload --port 8000
 
 后台自动同步归属于第一个创建的管理员账号；其他账号手动点击同步时，暂存条目会写入自己的暂存区，不会看到彼此的日程。
 
-## 对话助手（Phase 1）
+## 对话助手与 QQ 机器人
 
-后端内置只读的日程对话助手，默认使用 DeepSeek 的 OpenAI 兼容接口。当前阶段通过登录后的 HTTP 接口调试，QQ 接入在下一阶段完成。
+后端内置只读的日程对话助手，默认使用 DeepSeek 的 OpenAI 兼容接口。支持三种入口：登录后的 HTTP 调试接口、QQ 私聊、QQ 群内 @机器人 或 `/日程` 前缀。
+
+### LLM 配置
 
 配置（本地 `backend/.env`，Docker 部署写在根目录 `.env`）：
 
@@ -228,7 +233,7 @@ DEEPSEEK_MODEL=deepseek-chat
 BOT_HISTORY_TURNS=6
 ```
 
-未配置 `DEEPSEEK_API_KEY` 时，`/api/bot/chat` 返回 503，其他功能不受影响。
+未配置 `DEEPSEEK_API_KEY` 时，对话接口返回 503，其他功能不受影响。
 
 ```bash
 TOKEN=... # 登录后的 access_token
@@ -238,10 +243,46 @@ curl -s -X POST http://127.0.0.1:8000/api/bot/chat \
   -d '{"message":"我今天有什么安排？"}'
 ```
 
-- 当前支持查询时间区间、关键词搜索、单条详情和按天汇总；创建/修改/删除留到后续阶段
-- 工具只按当前登录账号过滤，不会返回其他账号的数据
-- 对话历史保存在进程内，重启后清空；传入 `conversation_id` 可延续同一会话
-- 完整设计、分步计划与 QQ 接入方式见 [对话机器人与 QQ 接入](./docs/06-qq-bot.md)
+### QQ 接入
+
+1. 部署 [NapCat](https://github.com/NapNeko/NapCatQQ) 或 Lagrange，启用 OneBot v11 正向 WebSocket（默认 `ws://127.0.0.1:3001`）
+2. 在 `backend/.env` 配置：
+
+```env
+QQ_BOT_ENABLED=true
+ONEBOT_WS_URL=ws://127.0.0.1:3001
+ONEBOT_ACCESS_TOKEN=与 NapCat 一致
+# 可选白名单，逗号分隔；留空表示不限制
+QQ_BOT_ALLOWED_USERS=
+QQ_BOT_ALLOWED_GROUPS=
+```
+
+3. 重启后端，访问 `/api/bot/status` 确认 `qq_connected: true`
+4. 登录网页后生成绑定码（当前通过 API，前端入口后续补充）：
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/bot/bind-code \
+  -H "Authorization: Bearer $TOKEN"
+# {"code":"123456","expires_at":"...Z","expires_in_seconds":600}
+```
+
+5. QQ 私聊机器人发送 `绑定 123456` 完成绑定，之后直接提问即可
+6. 群聊需要 @机器人 或使用 `/日程` 前缀；绑定码只能在私聊发送
+
+查看与解绑：
+
+```bash
+curl -s http://127.0.0.1:8000/api/bot/bindings -H "Authorization: Bearer $TOKEN"
+curl -s -X DELETE http://127.0.0.1:8000/api/bot/bindings/1 -H "Authorization: Bearer $TOKEN"
+```
+
+说明：
+
+- 当前只支持查询、搜索、单条详情和按天汇总；创建/修改/删除留到 Phase 3
+- 工具只按绑定账号过滤，不会返回其他账号的数据
+- 对话历史保存在进程内，重启后清空
+- 绑定码 10 分钟有效且只能使用一次；QQ 已被其他账号绑定时不会自动转移
+- 完整设计与分步计划见 [对话机器人与 QQ 接入](./docs/06-qq-bot.md)
 
 ## API
 
@@ -250,6 +291,9 @@ curl -s -X POST http://127.0.0.1:8000/api/bot/chat \
 | GET | `/api/health` | 健康检查（含数据库连通性与当前应用时区） |
 | GET | `/api/bot/status` | 对话助手配置状态 |
 | POST | `/api/bot/chat` | 与日程助手对话（需要登录） |
+| POST | `/api/bot/bind-code` | 生成 QQ 绑定码（10 分钟有效） |
+| GET | `/api/bot/bindings` | 当前账号的 QQ 绑定列表 |
+| DELETE | `/api/bot/bindings/{id}` | 解绑 QQ |
 | GET | `/api/auth/status` | 是否已创建管理员账号 |
 | POST | `/api/auth/setup` | 首次创建管理员账号 |
 | POST | `/api/auth/register` | 注册新账号（可通过环境变量关闭） |
