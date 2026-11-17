@@ -228,6 +228,7 @@ def group_events(events: list[dict]) -> list[RepoUpdate]:
 def sync_github(
     db: Session,
     *,
+    user_id: int,
     username: str,
     token: str | None,
     lookback_days: int,
@@ -257,6 +258,7 @@ def sync_github(
     for update in updates:
         existing_ref = db.scalar(
             select(StagedSchedule).where(
+                StagedSchedule.user_id == user_id,
                 StagedSchedule.source == "github",
                 StagedSchedule.source_ref == update.source_ref,
             )
@@ -269,6 +271,7 @@ def sync_github(
         if staged is None:
             staged = db.scalar(
                 select(StagedSchedule).where(
+                    StagedSchedule.user_id == user_id,
                     StagedSchedule.source == "github",
                     StagedSchedule.status == StagedStatus.pending,
                     StagedSchedule.source_ref.startswith(f"github:{update.repo}:", autoescape=True),
@@ -277,6 +280,7 @@ def sync_github(
 
         if staged is None:
             staged = staging_service.new_staged(
+                user_id=user_id,
                 source="github",
                 source_ref=update.source_ref,
                 source_url=update.html_url or None,
@@ -328,10 +332,16 @@ def run_auto_sync_once() -> None:
     """在后台线程中执行一次同步，失败只记录日志。"""
     from app.core.config import settings
     from app.db.session import SessionLocal
+    from app.services import auth_service
 
     with SessionLocal() as db:
+        user = auth_service.get_first_user(db)
+        if user is None:
+            logger.info("GitHub 自动同步跳过：尚未创建账号")
+            return
         result = sync_github(
             db,
+            user_id=user.id,
             username=settings.github_username,
             token=settings.github_token,
             lookback_days=settings.github_lookback_days,

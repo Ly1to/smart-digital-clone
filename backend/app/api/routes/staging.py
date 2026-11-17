@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import CurrentUser
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.enums import StagedStatus
@@ -17,11 +17,7 @@ from app.schemas.staging import (
 )
 from app.services import staging_service
 
-router = APIRouter(
-    prefix="/staging",
-    tags=["staging"],
-    dependencies=[Depends(get_current_user)],
-)
+router = APIRouter(prefix="/staging", tags=["staging"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
@@ -29,15 +25,17 @@ DbSession = Annotated[Session, Depends(get_db)]
 @router.get("", response_model=list[StagedScheduleRead])
 def list_staged(
     db: DbSession,
+    current_user: CurrentUser,
     status: Annotated[StagedStatus, Query(description="暂存状态")] = StagedStatus.pending,
 ) -> list:
-    return staging_service.list_staged(db, status=status)
+    return staging_service.list_staged(db, user_id=current_user.id, status=status)
 
 
 @router.post("/approve-all", response_model=StagedApproveAllResult)
-def approve_all_staged(db: DbSession) -> StagedApproveAllResult:
+def approve_all_staged(db: DbSession, current_user: CurrentUser) -> StagedApproveAllResult:
     approved, skipped = staging_service.approve_all_staged(
         db,
+        user_id=current_user.id,
         duration_minutes=settings.auto_schedule_duration_minutes,
         day_start_hour=settings.auto_schedule_day_start_hour,
         day_end_hour=settings.auto_schedule_day_end_hour,
@@ -46,15 +44,21 @@ def approve_all_staged(db: DbSession) -> StagedApproveAllResult:
 
 
 @router.patch("/{staged_id}", response_model=StagedScheduleRead)
-def update_staged(staged_id: int, payload: StagedScheduleUpdate, db: DbSession):
-    return staging_service.update_staged(db, staged_id, payload)
+def update_staged(
+    staged_id: int,
+    payload: StagedScheduleUpdate,
+    db: DbSession,
+    current_user: CurrentUser,
+):
+    return staging_service.update_staged(db, staged_id, payload, current_user.id)
 
 
 @router.post("/{staged_id}/approve", response_model=StagedApproveResult)
-def approve_staged(staged_id: int, db: DbSession) -> StagedApproveResult:
+def approve_staged(staged_id: int, db: DbSession, current_user: CurrentUser) -> StagedApproveResult:
     staged, schedule = staging_service.approve_staged(
         db,
         staged_id,
+        user_id=current_user.id,
         duration_minutes=settings.auto_schedule_duration_minutes,
         day_start_hour=settings.auto_schedule_day_start_hour,
         day_end_hour=settings.auto_schedule_day_end_hour,
@@ -63,5 +67,5 @@ def approve_staged(staged_id: int, db: DbSession) -> StagedApproveResult:
 
 
 @router.post("/{staged_id}/reject", response_model=StagedScheduleRead)
-def reject_staged(staged_id: int, db: DbSession):
-    return staging_service.reject_staged(db, staged_id)
+def reject_staged(staged_id: int, db: DbSession, current_user: CurrentUser):
+    return staging_service.reject_staged(db, staged_id, current_user.id)

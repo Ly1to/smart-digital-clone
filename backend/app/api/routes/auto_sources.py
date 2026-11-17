@@ -5,30 +5,22 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import CurrentUser
 from app.core.config import settings
 from app.db.session import get_db
 from app.schemas.staging import GithubStatusResponse, GithubSyncResponse
 from app.services import gitee_service, github_service
 from app.services.exceptions import GithubConfigurationError
 
-router = APIRouter(
-    prefix="/auto-sources/github",
-    tags=["auto-sources"],
-    dependencies=[Depends(get_current_user)],
-)
+router = APIRouter(prefix="/auto-sources/github", tags=["auto-sources"])
 
-gitee_router = APIRouter(
-    prefix="/auto-sources/gitee",
-    tags=["auto-sources"],
-    dependencies=[Depends(get_current_user)],
-)
+gitee_router = APIRouter(prefix="/auto-sources/gitee", tags=["auto-sources"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
 
 @router.get("/status", response_model=GithubStatusResponse)
-def github_status() -> GithubStatusResponse:
+def github_status(_current_user: CurrentUser) -> GithubStatusResponse:
     return GithubStatusResponse(
         configured=bool(settings.github_username or settings.github_token),
         username=settings.github_username,
@@ -38,12 +30,13 @@ def github_status() -> GithubStatusResponse:
 
 
 @router.post("/sync", response_model=GithubSyncResponse)
-def sync_github(db: DbSession) -> GithubSyncResponse:
+def sync_github(db: DbSession, current_user: CurrentUser) -> GithubSyncResponse:
     if not settings.github_username and not settings.github_token:
         raise GithubConfigurationError()
 
     result = github_service.sync_github(
         db,
+        user_id=current_user.id,
         username=settings.github_username,
         token=settings.github_token,
         lookback_days=settings.github_lookback_days,
@@ -64,7 +57,7 @@ def sync_github(db: DbSession) -> GithubSyncResponse:
 
 
 @gitee_router.get("/status", response_model=GithubStatusResponse)
-def gitee_status() -> GithubStatusResponse:
+def gitee_status(_current_user: CurrentUser) -> GithubStatusResponse:
     return GithubStatusResponse(
         configured=bool(settings.gitee_username),
         username=settings.gitee_username,
@@ -74,12 +67,13 @@ def gitee_status() -> GithubStatusResponse:
 
 
 @gitee_router.post("/sync", response_model=GithubSyncResponse)
-def sync_gitee(db: DbSession) -> GithubSyncResponse:
+def sync_gitee(db: DbSession, current_user: CurrentUser) -> GithubSyncResponse:
     if not settings.gitee_username:
         raise GithubConfigurationError("未配置 GITEE_USERNAME，无法同步 Gitee 仓库更新")
 
     result = gitee_service.sync_gitee(
         db,
+        user_id=current_user.id,
         username=settings.gitee_username,
         access_token=settings.gitee_access_token,
         lookback_days=settings.gitee_lookback_days,

@@ -43,12 +43,16 @@ class StagedSchedule(Base):
             "status IN ('pending', 'approved', 'rejected')",
             name="ck_staged_status_valid",
         ),
-        UniqueConstraint("source", "source_ref", name="uq_staged_source_ref"),
+        UniqueConstraint("user_id", "source", "source_ref", name="uq_staged_user_source_ref"),
+        Index("ix_staged_user_id", "user_id"),
         Index("ix_staged_status", "status"),
         Index("ix_staged_created_at", "created_at"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True
+    )
     source: Mapped[str] = mapped_column(String(40), nullable=False, default="github")
     source_ref: Mapped[str] = mapped_column(String(255), nullable=False)
     source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)

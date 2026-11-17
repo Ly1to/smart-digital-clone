@@ -151,11 +151,13 @@ def test_fetch_events_reports_api_error() -> None:
 def test_sync_creates_staged_items_in_today_free_slots(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(github_service, "fetch_events", lambda **kwargs: events)
     db.add(
         Schedule(
+            user_id=test_user.id,
             title="已占用",
             category=ScheduleCategory.work,
             start_at=datetime(2026, 11, 8, 1, 0, tzinfo=UTC),
@@ -169,6 +171,7 @@ def test_sync_creates_staged_items_in_today_free_slots(
 
     result = github_service.sync_github(
         db,
+        user_id=test_user.id,
         username="octo",
         token=None,
         lookback_days=14,
@@ -199,11 +202,13 @@ def test_sync_creates_staged_items_in_today_free_slots(
 def test_sync_is_idempotent_and_updates_pending_items(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(github_service, "fetch_events", lambda **kwargs: events)
     kwargs = {
         "db": db,
+        "user_id": test_user.id,
         "username": "octo",
         "token": None,
         "lookback_days": 14,
@@ -226,11 +231,13 @@ def test_sync_is_idempotent_and_updates_pending_items(
 def test_sync_skips_already_approved_updates(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(github_service, "fetch_events", lambda **kwargs: events)
     kwargs = {
         "db": db,
+        "user_id": test_user.id,
         "username": "octo",
         "token": None,
         "lookback_days": 14,
@@ -245,7 +252,7 @@ def test_sync_skips_already_approved_updates(
         select(StagedSchedule).where(StagedSchedule.source_ref.like("github:octo/demo:%"))
     )
     assert demo is not None
-    staging_service.approve_staged(db, demo.id, now=FIXED_NOW)
+    staging_service.approve_staged(db, demo.id, user_id=test_user.id, now=FIXED_NOW)
 
     result = github_service.sync_github(**kwargs)
 

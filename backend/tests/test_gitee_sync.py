@@ -151,11 +151,13 @@ def test_fetch_gitee_empty_404_returns_empty() -> None:
 def test_sync_gitee_creates_staged_items(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(gitee_service, "fetch_events", lambda **kwargs: events)
     db.add(
         Schedule(
+            user_id=test_user.id,
             title="已占用",
             category=ScheduleCategory.work,
             start_at=datetime(2026, 11, 8, 1, 0, tzinfo=UTC),
@@ -169,6 +171,7 @@ def test_sync_gitee_creates_staged_items(
 
     result = gitee_service.sync_gitee(
         db,
+        user_id=test_user.id,
         username="oschina",
         access_token=None,
         lookback_days=14,
@@ -198,11 +201,13 @@ def test_sync_gitee_creates_staged_items(
 def test_sync_gitee_is_idempotent(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(gitee_service, "fetch_events", lambda **kwargs: events)
     kwargs = {
         "db": db,
+        "user_id": test_user.id,
         "username": "oschina",
         "access_token": None,
         "lookback_days": 14,
@@ -225,11 +230,13 @@ def test_sync_gitee_is_idempotent(
 def test_sync_gitee_skips_approved(
     db: Session,
     events: list[dict],
+    test_user,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(gitee_service, "fetch_events", lambda **kwargs: events)
     kwargs = {
         "db": db,
+        "user_id": test_user.id,
         "username": "oschina",
         "access_token": None,
         "lookback_days": 14,
@@ -244,7 +251,7 @@ def test_sync_gitee_skips_approved(
         select(StagedSchedule).where(StagedSchedule.source_ref.like("gitee:oschina/demo:%"))
     )
     assert demo is not None
-    staging_service.approve_staged(db, demo.id, now=FIXED_NOW)
+    staging_service.approve_staged(db, demo.id, user_id=test_user.id, now=FIXED_NOW)
 
     result = gitee_service.sync_gitee(**kwargs)
 

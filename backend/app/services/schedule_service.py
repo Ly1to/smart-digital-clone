@@ -26,8 +26,10 @@ def _validate_and_normalize(
     return start_at, end_at
 
 
-def get_schedule(db: Session, schedule_id: int) -> Schedule:
-    schedule = db.get(Schedule, schedule_id)
+def get_schedule(db: Session, schedule_id: int, user_id: int) -> Schedule:
+    schedule = db.scalar(
+        select(Schedule).where(Schedule.id == schedule_id, Schedule.user_id == user_id)
+    )
     if schedule is None:
         raise ScheduleNotFoundError(schedule_id)
     return schedule
@@ -36,13 +38,14 @@ def get_schedule(db: Session, schedule_id: int) -> Schedule:
 def list_schedules(
     db: Session,
     *,
+    user_id: int,
     start: datetime | None = None,
     end: datetime | None = None,
     categories: list[ScheduleCategory] | None = None,
     statuses: list[ScheduleStatus] | None = None,
     keyword: str | None = None,
 ) -> list[Schedule]:
-    stmt: Select[tuple[Schedule]] = select(Schedule)
+    stmt: Select[tuple[Schedule]] = select(Schedule).where(Schedule.user_id == user_id)
 
     # 区间查询使用半开区间：只要日程与 [start, end) 有交集就返回。
     if start is not None:
@@ -67,9 +70,10 @@ def list_schedules(
     return list(db.scalars(stmt))
 
 
-def create_schedule(db: Session, payload: ScheduleCreate) -> Schedule:
+def create_schedule(db: Session, payload: ScheduleCreate, user_id: int) -> Schedule:
     start_at, end_at = _validate_and_normalize(payload.start_at, payload.end_at, payload.all_day)
     schedule = Schedule(
+        user_id=user_id,
         title=payload.title,
         category=payload.category,
         description=payload.description,
@@ -85,8 +89,10 @@ def create_schedule(db: Session, payload: ScheduleCreate) -> Schedule:
     return schedule
 
 
-def update_schedule(db: Session, schedule_id: int, payload: ScheduleUpdate) -> Schedule:
-    schedule = get_schedule(db, schedule_id)
+def update_schedule(
+    db: Session, schedule_id: int, payload: ScheduleUpdate, user_id: int
+) -> Schedule:
+    schedule = get_schedule(db, schedule_id, user_id)
     changes = payload.model_dump(exclude_unset=True)
 
     start_at = changes.get("start_at", schedule.start_at)
@@ -104,7 +110,7 @@ def update_schedule(db: Session, schedule_id: int, payload: ScheduleUpdate) -> S
     return schedule
 
 
-def delete_schedule(db: Session, schedule_id: int) -> None:
-    schedule = get_schedule(db, schedule_id)
+def delete_schedule(db: Session, schedule_id: int, user_id: int) -> None:
+    schedule = get_schedule(db, schedule_id, user_id)
     db.delete(schedule)
     db.commit()

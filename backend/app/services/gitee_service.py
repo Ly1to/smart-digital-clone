@@ -268,6 +268,7 @@ def group_events(events: list[dict]) -> list[GiteeRepoUpdate]:
 def sync_gitee(
     db: Session,
     *,
+    user_id: int,
     username: str,
     access_token: str | None,
     lookback_days: int,
@@ -297,6 +298,7 @@ def sync_gitee(
     for update in updates:
         existing_ref = db.scalar(
             select(StagedSchedule).where(
+                StagedSchedule.user_id == user_id,
                 StagedSchedule.source == "gitee",
                 StagedSchedule.source_ref == update.source_ref,
             )
@@ -309,6 +311,7 @@ def sync_gitee(
         if staged is None:
             staged = db.scalar(
                 select(StagedSchedule).where(
+                    StagedSchedule.user_id == user_id,
                     StagedSchedule.source == "gitee",
                     StagedSchedule.status == StagedStatus.pending,
                     StagedSchedule.source_ref.startswith(f"gitee:{update.repo}:", autoescape=True),
@@ -317,6 +320,7 @@ def sync_gitee(
 
         if staged is None:
             staged = staging_service.new_staged(
+                user_id=user_id,
                 source="gitee",
                 source_ref=update.source_ref,
                 source_url=update.html_url or None,
@@ -367,10 +371,16 @@ def sync_gitee(
 def run_auto_sync_once() -> None:
     from app.core.config import settings
     from app.db.session import SessionLocal
+    from app.services import auth_service
 
     with SessionLocal() as db:
+        user = auth_service.get_first_user(db)
+        if user is None:
+            logger.info("Gitee 自动同步跳过：尚未创建账号")
+            return
         result = sync_gitee(
             db,
+            user_id=user.id,
             username=settings.gitee_username,
             access_token=settings.gitee_access_token,
             lookback_days=settings.gitee_lookback_days,

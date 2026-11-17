@@ -48,3 +48,8 @@ class AuthAlreadyInitializedError(ValueError):
 class AuthInvalidCredentialsError(ValueError):
     def __init__(self, message: str = "用户名或密码不正确") -> None:
         super().__init__(message)
+
+
+class AuthUsernameTakenError(ValueError):
+    def __init__(self, message: str = "用户名已被使用") -> None:
+        super().__init__(message)

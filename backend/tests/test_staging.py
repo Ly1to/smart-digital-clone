@@ -16,8 +16,9 @@ def fixed_now(monkeypatch) -> None:
     monkeypatch.setattr(staging_service, "local_now", lambda: FIXED_NOW)
 
 
-def create_staged(db: Session, ref: str, **overrides) -> StagedSchedule:
+def create_staged(db: Session, user_id: int, ref: str, **overrides) -> StagedSchedule:
     values = {
+        "user_id": user_id,
         "source": "github",
         "source_ref": f"github:octo/demo:{ref}",
         "source_url": "https://github.com/octo/demo",
@@ -36,9 +37,9 @@ def create_staged(db: Session, ref: str, **overrides) -> StagedSchedule:
     return staged
 
 
-def test_list_defaults_to_pending(client, db: Session) -> None:
-    pending = create_staged(db, "a")
-    create_staged(db, "b", status=StagedStatus.approved)
+def test_list_defaults_to_pending(client, db: Session, test_user) -> None:
+    pending = create_staged(db, test_user.id, "a")
+    create_staged(db, test_user.id, "b", status=StagedStatus.approved)
 
     response = client.get("/api/staging")
 
@@ -47,8 +48,8 @@ def test_list_defaults_to_pending(client, db: Session) -> None:
     assert response.json()[0]["status"] == "pending"
 
 
-def test_update_staged_fields(client, db: Session) -> None:
-    staged = create_staged(db, "update")
+def test_update_staged_fields(client, db: Session, test_user) -> None:
+    staged = create_staged(db, test_user.id, "update")
     start = FIXED_NOW + timedelta(hours=1)
     end = start + timedelta(minutes=45)
 
@@ -68,8 +69,8 @@ def test_update_staged_fields(client, db: Session) -> None:
     assert data["end_at"] == end.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
-def test_update_rejects_invalid_time_range(client, db: Session) -> None:
-    staged = create_staged(db, "invalid")
+def test_update_rejects_invalid_time_range(client, db: Session, test_user) -> None:
+    staged = create_staged(db, test_user.id, "invalid")
     start = FIXED_NOW + timedelta(hours=1)
 
     response = client.patch(
@@ -84,8 +85,8 @@ def test_update_rejects_invalid_time_range(client, db: Session) -> None:
     assert "结束时间" in response.json()["detail"]
 
 
-def test_reject_staged_removes_it_from_pending(client, db: Session) -> None:
-    staged = create_staged(db, "reject")
+def test_reject_staged_removes_it_from_pending(client, db: Session, test_user) -> None:
+    staged = create_staged(db, test_user.id, "reject")
 
     response = client.post(f"/api/staging/{staged.id}/reject")
 
@@ -94,10 +95,10 @@ def test_reject_staged_removes_it_from_pending(client, db: Session) -> None:
     assert client.get("/api/staging").json() == []
 
 
-def test_approve_staged_creates_schedule_and_marks_approved(client, db: Session) -> None:
+def test_approve_staged_creates_schedule_and_marks_approved(client, db: Session, test_user) -> None:
     start = datetime(2026, 11, 8, 2, 0, tzinfo=UTC)
     end = start + timedelta(minutes=30)
-    staged = create_staged(db, "approve", start_at=start, end_at=end)
+    staged = create_staged(db, test_user.id, "approve", start_at=start, end_at=end)
 
     response = client.post(f"/api/staging/{staged.id}/approve")
 
@@ -114,8 +115,8 @@ def test_approve_staged_creates_schedule_and_marks_approved(client, db: Session)
     assert repeated.status_code == 409
 
 
-def test_approve_rejects_when_no_free_slot(client, db: Session, monkeypatch) -> None:
-    staged = create_staged(db, "full")
+def test_approve_rejects_when_no_free_slot(client, db: Session, test_user, monkeypatch) -> None:
+    staged = create_staged(db, test_user.id, "full")
     monkeypatch.setattr(
         staging_service,
         "local_now",
@@ -128,9 +129,9 @@ def test_approve_rejects_when_no_free_slot(client, db: Session, monkeypatch) -> 
     assert "空闲时间" in response.json()["detail"]
 
 
-def test_approve_all_assigns_sequential_slots(client, db: Session) -> None:
-    first = create_staged(db, "first")
-    second = create_staged(db, "second")
+def test_approve_all_assigns_sequential_slots(client, db: Session, test_user) -> None:
+    first = create_staged(db, test_user.id, "first")
+    second = create_staged(db, test_user.id, "second")
 
     response = client.post("/api/staging/approve-all")
 
@@ -148,9 +149,10 @@ def test_approve_all_assigns_sequential_slots(client, db: Session) -> None:
     assert db.get(StagedSchedule, second.id).status == StagedStatus.approved
 
 
-def test_approve_avoids_existing_schedule(client, db: Session) -> None:
+def test_approve_avoids_existing_schedule(client, db: Session, test_user) -> None:
     db.add(
         Schedule(
+            user_id=test_user.id,
             title="已占用",
             category=ScheduleCategory.work,
             start_at=datetime(2026, 11, 8, 1, 0, tzinfo=UTC),
@@ -161,7 +163,7 @@ def test_approve_avoids_existing_schedule(client, db: Session) -> None:
         )
     )
     db.commit()
-    staged = create_staged(db, "busy")
+    staged = create_staged(db, test_user.id, "busy")
 
     response = client.post(f"/api/staging/{staged.id}/approve")
 
@@ -172,3 +174,18 @@ def test_approve_avoids_existing_schedule(client, db: Session) -> None:
 def test_missing_staged_returns_404(client) -> None:
     assert client.post("/api/staging/999/approve").status_code == 404
     assert client.post("/api/staging/999/reject").status_code == 404
+
+
+def test_staging_is_isolated_between_users(client, db: Session, test_user) -> None:
+    staged = create_staged(db, test_user.id, "private")
+
+    registered = client.post(
+        "/api/auth/register",
+        json={"username": "second", "password": "another-password-123"},
+    )
+    assert registered.status_code == 201
+    headers = {"Authorization": f"Bearer {registered.json()['access_token']}"}
+
+    assert client.get("/api/staging", headers=headers).json() == []
+    assert client.post(f"/api/staging/{staged.id}/approve", headers=headers).status_code == 404
+    assert client.post(f"/api/staging/{staged.id}/reject", headers=headers).status_code == 404

@@ -9,6 +9,7 @@ from app.core.time import serialize_utc, to_utc
 
 class AuthStatusResponse(BaseModel):
     initialized: bool
+    registration_enabled: bool = True
 
 
 class LoginRequest(BaseModel):
@@ -35,6 +36,10 @@ class SetupRequest(BaseModel):
         if len(value) < 3:
             raise ValueError("用户名至少需要 3 个字符")
         return value
+
+
+class RegisterRequest(SetupRequest):
+    pass
 
 
 class UserRead(BaseModel):

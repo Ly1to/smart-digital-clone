@@ -6,18 +6,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import CurrentUser
 from app.core.time import to_utc
 from app.db.session import get_db
 from app.models.enums import ScheduleCategory, ScheduleStatus
 from app.schemas.schedule import ScheduleCreate, ScheduleRead, ScheduleUpdate
 from app.services import schedule_service
 
-router = APIRouter(
-    prefix="/schedules",
-    tags=["schedules"],
-    dependencies=[Depends(get_current_user)],
-)
+router = APIRouter(prefix="/schedules", tags=["schedules"])
 
 DbSession = Annotated[Session, Depends(get_db)]
 
@@ -47,6 +43,7 @@ def _parse_enum_list(
 @router.get("", response_model=list[ScheduleRead])
 def list_schedules(
     db: DbSession,
+    current_user: CurrentUser,
     start: Annotated[datetime | None, Query(description="查询区间开始，ISO 8601")] = None,
     end: Annotated[datetime | None, Query(description="查询区间结束，ISO 8601，不包含")] = None,
     categories: Annotated[str | None, Query(description="逗号分隔，如 work,outing")] = None,
@@ -63,6 +60,7 @@ def list_schedules(
 
     return schedule_service.list_schedules(
         db,
+        user_id=current_user.id,
         start=start,
         end=end,
         categories=_parse_enum_list(categories, ScheduleCategory, "日程分类"),
@@ -72,20 +70,22 @@ def list_schedules(
 
 
 @router.get("/{schedule_id}", response_model=ScheduleRead)
-def get_schedule(schedule_id: int, db: DbSession):
-    return schedule_service.get_schedule(db, schedule_id)
+def get_schedule(schedule_id: int, db: DbSession, current_user: CurrentUser):
+    return schedule_service.get_schedule(db, schedule_id, current_user.id)
 
 
 @router.post("", response_model=ScheduleRead, status_code=status.HTTP_201_CREATED)
-def create_schedule(payload: ScheduleCreate, db: DbSession):
-    return schedule_service.create_schedule(db, payload)
+def create_schedule(payload: ScheduleCreate, db: DbSession, current_user: CurrentUser):
+    return schedule_service.create_schedule(db, payload, current_user.id)
 
 
 @router.patch("/{schedule_id}", response_model=ScheduleRead)
-def update_schedule(schedule_id: int, payload: ScheduleUpdate, db: DbSession):
-    return schedule_service.update_schedule(db, schedule_id, payload)
+def update_schedule(
+    schedule_id: int, payload: ScheduleUpdate, db: DbSession, current_user: CurrentUser
+):
+    return schedule_service.update_schedule(db, schedule_id, payload, current_user.id)
 
 
 @router.delete("/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_schedule(schedule_id: int, db: DbSession) -> None:
-    schedule_service.delete_schedule(db, schedule_id)
+def delete_schedule(schedule_id: int, db: DbSession, current_user: CurrentUser) -> None:
+    schedule_service.delete_schedule(db, schedule_id, current_user.id)

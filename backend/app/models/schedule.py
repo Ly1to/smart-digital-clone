@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    ForeignKey,
     Index,
     Integer,
     String,
@@ -34,6 +35,7 @@ class Schedule(Base):
             "status IN ('pending', 'completed', 'cancelled')",
             name="ck_schedules_status_valid",
         ),
+        Index("ix_schedules_user_id", "user_id"),
         Index("ix_schedules_start_at", "start_at"),
         Index("ix_schedules_end_at", "end_at"),
         Index("ix_schedules_category", "category"),
@@ -42,6 +44,9 @@ class Schedule(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True
+    )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     category: Mapped[ScheduleCategory] = mapped_column(
         SAEnum(

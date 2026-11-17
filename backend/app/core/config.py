@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=7 * 24 * 60, ge=5, le=365 * 24 * 60)
     auth_bootstrap_username: str = ""
     auth_bootstrap_password: str = ""
+    allow_registration: bool = True
 
 
 @lru_cache
