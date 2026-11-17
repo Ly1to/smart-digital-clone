@@ -3,19 +3,19 @@
 > 所属项目：个人日程系统  
 > 上位文档：[开发手册](./DEVELOPMENT.md)  
 > 范围依据：[步骤一：明确第一版范围](./01-product-scope.md)  
-> 文档状态：第一版技术栈已确认  
-> 更新日期：2026-11-04
+> 文档状态：技术栈基线 + 当前实现说明  
+> 更新日期：2026-11-20
 
-> 实现说明（2026-11-14）：当前版本已增加 JWT 登录、多账号注册、用户数据隔离、Tailwind CSS 和自动来源，本文档保留技术选型基线。
+> 实现说明（2026-11-20）：当前版本已增加 JWT 登录、多账号注册、用户数据隔离、Tailwind CSS v4、GitHub / Gitee 自动来源和 `APP_TIMEZONE` 时区配置。本文档保留技术选型基线，与实现不一致处以本节和专题文档为准。
 
 ## 1. 决策原则
 
 第一版技术栈以 `01-product-scope.md` 已确认的范围为准。开发手册提供总体技术方向，但当两份文档存在差异时，第一版执行以下已收敛决策：
 
-- 单用户、免登录
-- 只支持手动创建、编辑和删除日程
+- 单用户、免登录（现状：多账号登录与数据隔离）
+- 只支持手动创建、编辑和删除日程（现状：另有 GitHub / Gitee 自动来源暂存区）
 - 日程固定分为工作、外出、私人时间三类
-- 不接入第三方应用、消息或外部数据源
+- 不接入第三方应用、消息或外部数据源（现状：已接入 GitHub / Gitee 仓库事件）
 - 提醒、重复日程和标签不阻塞 MVP
 
 技术选择遵循以下原则：
@@ -46,7 +46,7 @@
 | 数据校验 | Pydantic 2 | 请求、响应和配置模型 |
 | ORM | SQLAlchemy 2 | 日程持久化和查询 |
 | 数据迁移 | Alembic | 数据库表结构版本管理 |
-| 数据库 | SQLite | 单用户 MVP 的本地持久化 |
+| 数据库 | SQLite | 多账号单机部署的本地持久化 |
 | ASGI 服务 | Uvicorn | 本地开发和单实例服务运行 |
 | 后端测试 | pytest + pytest-asyncio + HTTPX | API、业务规则和异步请求测试 |
 | 前端测试 | Vitest + Vue Test Utils | 组件、表单和状态测试 |
@@ -85,9 +85,9 @@ Vite 同时负责：
 
 MVP 虽然以日历主页为核心，但仍保留 Vue Router 和 Pinia：
 
-- Vue Router 管理日历主页及未来的独立设置页
-- Pinia 管理当前日期范围、当前视图、分类筛选和日程数据
-- 不创建 `auth` store，因为第一版没有登录状态
+- Vue Router 管理登录页、注册页和日历主页，并负责登录守卫
+- Pinia 管理当前日期范围、当前视图、分类筛选、日程数据和登录状态
+- `auth` store 负责 Token、当前用户、认证状态和注册动作
 
 日程详情、创建和编辑优先使用弹窗或侧边抽屉，不额外拆成独立路由。这样既保留后续页面扩展能力，也不让简单交互承担多余的路由复杂度。
 
@@ -126,7 +126,7 @@ Element Plus 用于：
 
 MVP 使用月、周、日视图。拖拽修改时间属于 P1，因此第一版只保留事件点击和日期点击交互。
 
-### 3.6 Day.js 和 Axios
+### 3.7 Day.js 和 Axios
 
 - Day.js 负责前端日期格式化、日期区间计算和本地时区展示
 - Axios 负责统一请求地址、超时、错误转换和 API 类型封装
@@ -148,13 +148,19 @@ FastAPI 提供 REST API 和自动生成的 OpenAPI 文档。Pydantic 模型负�
 
 ### 4.2 SQLAlchemy + Alembic
 
-使用 SQLAlchemy 2 的声明式模型管理日程数据，使用 Alembic 管理所有表结构变更。
-
-第一版不需要 `users`、`roles` 或 `schedule_users` 表。日程表至少包含：
+使用 SQLAlchemy 2 的声明式模型管理日程数据，使用 Alembic 管理所有表结构变更。当前结构（迁移 `0001`–`0004`）：
 
 ```text
+users
+- id
+- username（唯一）
+- password_hash
+- created_at
+- updated_at
+
 schedules
 - id
+- user_id（外键，按账号隔离）
 - title
 - category
 - description
@@ -163,23 +169,35 @@ schedules
 - all_day
 - location
 - status
+- source（manual / github / gitee）
+- source_ref、source_url
 - created_at
 - updated_at
+
+staged_schedules
+- id
+- user_id（外键）
+- source、source_ref（同一账号内唯一）
+- source_url、source_meta
+- 日程字段与建议时间
+- status（pending / approved / rejected）
+- schedule_id、approved_at
 ```
 
-约束建议：
+约束：
 
+- `username` 唯一，`password_hash` 保存 scrypt 哈希
 - `title` 不能为空
 - `category` 只允许 `work`、`outing`、`private`
 - `end_at` 必须晚于 `start_at`
-- `start_at` 和 `category` 建立索引，支持日历区间查询和分类筛选
+- `start_at`、`end_at`、`category`、`user_id` 建立索引，支持日历区间查询、分类筛选和账号隔离
 - 时间字段以 UTC 存储
 
-提醒、重复规则和标签字段不进入 MVP 第一次迁移。后续加入时通过新的 Alembic 迁移完成，避免为未实现功能预留含义不清的列。
+提醒、重复规则和标签字段仍未加入；接入时通过新的 Alembic 迁移完成，不为未实现功能预留含义不清的列。
 
 ### 4.3 SQLite
 
-MVP 是单用户、低并发应用，SQLite 足以支撑日程 CRUD、日期范围查询和分类筛选：
+当前是多账号、低并发应用，SQLite 足以支撑日程 CRUD、日期范围查询和分类筛选：
 
 - 数据库文件放在持久化数据目录中
 - 所有查询使用 SQLAlchemy，不直接依赖 SQLite 专有接口
@@ -190,20 +208,45 @@ MVP 是单用户、低并发应用，SQLite 足以支撑日程 CRUD、日期范�
 
 ### 4.4 Uvicorn
 
-本地开发通过 Uvicorn 启动 FastAPI。单用户 MVP 使用单进程部署，不引入 Gunicorn 多进程、Celery 或 Redis。
+本地开发通过 Uvicorn 启动 FastAPI。当前使用单进程部署，不引入 Gunicorn 多进程、Celery 或 Redis。
+
+### 4.5 时区
+
+- 应用时区由 `APP_TIMEZONE` 配置，默认 `Asia/Shanghai`，启动时用 `ZoneInfo` 校验，非法值直接导致启动失败
+- `app/core/time.py` 提供 `app_timezone()` 和 `local_now()`，自动来源的“今天 09:00–22:00”窗口与全天占位日期均按该时区计算，不再依赖容器或宿主机 `TZ`
+- 数据库保存 UTC；前端仍按浏览器本地时区展示，接口 `/api/health` 会返回当前生效的 `timezone`
+- Docker 镜像已安装 `tzdata`；Compose 将同一值同时传给 `APP_TIMEZONE` 和 `TZ`，保证日志时间一致
 
 ## 5. API 技术约定
 
-第一版接口不包含认证接口，建议使用：
+当前接口：
 
 ```text
 GET    /api/health
 
-GET    /api/schedules?start=...&end=...&categories=work,outing
+GET    /api/auth/status
+POST   /api/auth/setup
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/auth/me
+POST   /api/auth/logout
+
+GET    /api/schedules?start=...&end=...&categories=work,outing&statuses=...&keyword=...
 GET    /api/schedules/{id}
 POST   /api/schedules
 PATCH  /api/schedules/{id}
 DELETE /api/schedules/{id}
+
+GET    /api/staging
+PATCH  /api/staging/{id}
+POST   /api/staging/{id}/approve
+POST   /api/staging/{id}/reject
+POST   /api/staging/approve-all
+
+GET    /api/auto-sources/github/status
+POST   /api/auto-sources/github/sync
+GET    /api/auto-sources/gitee/status
+POST   /api/auto-sources/gitee/sync
 ```
 
 接口约定：
@@ -214,7 +257,7 @@ DELETE /api/schedules/{id}
 - 日期范围查询按 `start` 和 `end` 参数过滤
 - 标题和描述搜索使用 `keyword` 参数
 - 使用统一错误结构，例如 `{"detail": "结束时间必须晚于开始时间"}`
-- 不设计 `login`、`register`、`logout`、`refresh_token` 等接口
+- 认证接口见 [登录与认证](./05-authentication.md)：status / setup / register / login / me / logout；不提供 `refresh_token`，Token 过期后重新登录
 
 ## 6. 推荐的 Mono-repo 结构
 
@@ -279,6 +322,9 @@ digital-clone/
 - 关键词查询
 - 编辑和删除
 - 全天、跨天和本地时间边界
+- 首次创建管理员、注册、重复用户名、关闭注册
+- 不同账号只能访问自己的日程与暂存数据
+- `APP_TIMEZONE` 非法值校验与自动排程日期边界
 
 ### 7.2 前端
 
@@ -354,22 +400,22 @@ make docker-up
 
 MVP 不需要 HTTPS 证书配置以外的应用认证。公网部署的访问保护由部署层提供，不属于产品功能。
 
-## 9. 第一版明确不引入的技术
+## 9. 尚未引入的技术
 
-以下技术在 MVP 中不安装、不配置，也不提前建立目录或空服务：
+以下技术当前不安装、不配置，也不提前建立目录或空服务：
 
 | 技术 | 不引入原因 |
 | --- | --- |
-| JWT、OAuth、密码哈希 | 第一版单用户免登录 |
 | Redis | 没有缓存、消息队列或实时协作需求 |
-| Celery | MVP 没有提醒和后台任务 |
+| Celery | 目前没有提醒任务 |
 | APScheduler | 提醒属于 P1 |
-| PostgreSQL | SQLite 足以支撑单用户 MVP |
+| PostgreSQL | SQLite 足以支撑单机多账号的低并发用量 |
 | WebSocket | 没有实时多人协作需求 |
-| GitHub API、音乐平台 API | 明确不做第三方数据接入 |
 | 第三方消息 SDK | 明确不做消息导入 |
-| Pinia auth store | 没有认证状态 |
-| FullCalendar Premium | MVP 只需要开源日、周、月视图 |
+| FullCalendar Premium | 只需要开源日、周、月视图 |
+| 日历双向同步（Google / Outlook） | 仍在后续规划中 |
+
+JWT、密码哈希、GitHub / Gitee API 和 Pinia `auth` store 已随登录与自动来源功能引入。
 
 ## 10. 后续能力的技术扩展边界
 
@@ -378,7 +424,7 @@ MVP 不需要 HTTPS 证书配置以外的应用认证。公网部署的访问保
 - PostgreSQL：通过 SQLAlchemy 和 Alembic 迁移，不在业务代码中依赖 SQLite 专有语法
 - ICS：后续增加独立的导入导出服务，不在 MVP API 中预留空接口
 - 第三方数据接入：必须单独设计授权、同步频率、数据来源和失败重试，不与手动创建接口混在一起
-- 多用户：当前不属于规划范围；如未来引入，需要重新设计方案，不在 MVP 中做无效兼容
+- 多用户：已实现多账号登录、注册和数据隔离；团队共享、角色权限仍未规划
 
 ## 11. 技术栈确认结论
 
@@ -386,11 +432,12 @@ MVP 不需要 HTTPS 证书配置以外的应用认证。公网部署的访问保
 
 ```text
 Vue 3 + TypeScript + Vite + Vue Router + Pinia
-Element Plus + FullCalendar + Day.js + Axios
+Element Plus + FullCalendar + Day.js + Axios + Tailwind CSS 4
 Python 3.14 + FastAPI + Pydantic + SQLAlchemy + Alembic
-SQLite + Uvicorn
+JWT + scrypt + SQLite + Uvicorn
+GitHub / Gitee API + 暂存区
 pytest + Vitest + Playwright
 uv + npm + Docker Compose + Nginx
 ```
 
-该方案只覆盖单用户、免登录、三类日程的手动创建、查看、编辑、删除、搜索和筛选，不包含认证、第三方接入、提醒任务、重复日程或多人协作基础设施。
+当前实现覆盖：多账号登录与数据隔离、三类日程的手动创建/查看/编辑/删除/搜索/筛选、全天与跨天日程、GitHub / Gitee 自动来源暂存区、Docker Compose 部署。提醒任务、重复日程、标签、ICS 和第三方日历同步仍未实现；反向代理之后按 `APP_TIMEZONE` 计算自动排程窗口。

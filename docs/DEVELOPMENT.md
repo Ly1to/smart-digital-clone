@@ -1,33 +1,34 @@
 # 个人日程系统开发手册
 
 > 技术方向：Vue 3 前端 + Python（FastAPI）后端  
-> 文档状态：初稿  
-> 更新日期：2026-11-04
+> 文档状态：核心功能已实现，进入试用与 P1 补全阶段  
+> 更新日期：2026-11-20
 
 ## 1. 项目目标
 
-开发一个面向个人使用的日程管理系统。第一版优先完成日程管理、日历展示和提醒功能，再逐步增加重复日程、第三方日历同步和智能排期等能力。
+开发一个面向个人使用的多账号日程管理系统。当前已完成日程管理、日历展示、登录注册、自动来源暂存区和 Docker 部署；提醒、重复日程、标签与第三方日历同步仍待实现。
 
 推荐采用 **Vue 3 + FastAPI**，先实现可用的 MVP，再根据实际使用反馈持续迭代。
 
 ## 2. 第一版范围
 
-开始开发前，先确定系统是个人使用还是多用户使用。这会直接影响登录、权限和数据隔离设计。
+详细需求、业务规则与验收标准见 [步骤一：明确第一版范围](./01-product-scope.md)（基线已被实现超出，见文首现状表）。
 
-详细需求、业务规则与验收标准见 [步骤一：明确第一版范围](./01-product-scope.md)。
+| 能力 | 状态 |
+| --- | --- |
+| 创建、编辑、删除日程（标题、描述、开始/结束时间、全天、地点、状态） | 已实现 |
+| 日、周、月三种视图 | 已实现 |
+| 按关键词、日期、分类、状态筛选 | 已实现 |
+| 多账号登录、注册与数据隔离 | 已实现 |
+| GitHub / Gitee 自动来源与暂存区 | 已实现 |
+| 三套主题色与响应式布局 | 已实现 |
+| 开始前提醒 | 未实现（P1） |
+| 每天、每周、每月重复日程 | 未实现（P1） |
+| 标签 | 未实现（P1） |
+| ICS 导入导出 | 未实现（P1） |
+| 第三方日历双向同步、AI 自动排期 | 未实现（P2） |
 
-第一版建议包含：
-
-- 创建、编辑、删除日程
-- 日程字段：标题、描述、开始时间、结束时间、全天事件、地点、状态
-- 日、周、月三种视图
-- 按关键词、日期、标签筛选
-- 开始前提醒，例如提前 10 分钟、1 小时
-- 用户登录与数据隔离
-- 简单的重复日程：每天、每周、每月
-- 时区设置
-
-建议把第三方日历同步、多人共享和 AI 自动排期放到后续版本。
+自动来源、暂存区和时区窗口的实现细节见 [自动日程来源与暂存区](./04-auto-schedule-sources.md)，认证细节见 [登录与认证](./05-authentication.md)。
 
 ## 3. 界面与交互原型
 
@@ -37,9 +38,9 @@
 
 - 登录/注册页
 - 日历主页面
-- 日程创建/编辑弹窗
+- 日程创建/编辑面板（移动端为底部抽屉）
 - 日程详情侧边栏
-- 设置页：时区、默认提醒时间
+- 设置区域：主题、账号与退出（时区选择、默认提醒尚未实现）
 - 搜索和筛选区域
 
 同时确定关键交互：
@@ -54,120 +55,128 @@
 
 第一版已确认的具体技术选型和版本策略见 [步骤二：确认技术栈](./02-tech-stack.md)。
 
-| 模块 | 推荐技术 |
+| 模块 | 当前使用 |
 | --- | --- |
 | 前端框架 | Vue 3、Vite、TypeScript |
 | 路由与状态 | Vue Router、Pinia |
-| UI 组件 | Element Plus 或 Naive UI |
-| 样式系统 | Tailwind CSS |
+| UI 组件 | Element Plus |
+| 样式系统 | Tailwind CSS 4 |
 | 日历组件 | FullCalendar |
 | 后端框架 | FastAPI |
 | ORM | SQLAlchemy |
 | 数据迁移 | Alembic |
-| 数据库 | MVP 可选 SQLite，正式部署建议 PostgreSQL |
-| 登录认证 | JWT + 密码哈希 |
-| 定时提醒 | 单实例使用 APScheduler；多实例使用 Celery + Redis |
+| 数据库 | SQLite（单机部署，后续可迁 PostgreSQL） |
+| 登录认证 | JWT + scrypt 密码哈希 |
+| 定时任务 | 自动来源同步使用 asyncio 循环；提醒未实现 |
 | 接口文档 | FastAPI Swagger |
 | 测试 | pytest、Vitest、Playwright |
-| 部署 | Docker Compose + Nginx + HTTPS |
+| 部署 | Docker Compose + Nginx（HTTPS 由前置代理终止） |
 
 ## 5. 数据库设计
 
-核心表可以先设计为：
+当前结构由 Alembic 迁移 `0001`–`0004` 维护，完整字段见 [步骤二：确认技术栈](./02-tech-stack.md#42-sqlalchemy--alembic)，概要如下：
 
 ```text
 users
-- id
-- email
-- password_hash
-- timezone
-- created_at
+- id、username（唯一）、password_hash
+- created_at、updated_at
 
 schedules
-- id
-- user_id
-- title
-- description
-- start_at
-- end_at
-- all_day
-- location
-- status
-- recurrence_rule
-- remind_minutes
-- created_at
-- updated_at
+- id、user_id（外键）
+- title、category、description
+- start_at、end_at、all_day、location、status
+- source、source_ref、source_url
+- created_at、updated_at
+
+staged_schedules
+- id、user_id（外键）
+- source、source_ref、source_url、source_meta
+- 日程字段与建议时间
+- status（pending / approved / rejected）
+- schedule_id、approved_at
+- created_at、updated_at
 ```
 
-如果希望一个日程关联多个标签，再增加：
+时间统一以 UTC 保存，前端按浏览器本地时区展示；后端自动排程窗口由 `APP_TIMEZONE` 决定。
 
-```text
-tags
-schedule_tags
-```
-
-时间统一以 UTC 保存，前端根据用户时区展示。重复日程使用 iCalendar 的 RRULE 规则字符串，避免自行设计复杂格式。
+tags、schedule_tags、recurrence_rule、remind_minutes 和 users.timezone 均未建立，避免为未实现功能预留含义不清的列；接入时通过新的 Alembic 迁移添加。
 
 ## 6. 后端 API
 
-先完成认证和日程 CRUD：
+当前路由（完整列表与示例见 [README](../README.md#api)）：
 
 ```text
+GET    /api/health
+
+GET    /api/auth/status
+POST   /api/auth/setup
 POST   /api/auth/register
 POST   /api/auth/login
 GET    /api/auth/me
+POST   /api/auth/logout
 
-GET    /api/schedules?start=...&end=...
+GET    /api/schedules?start=...&end=...&categories=...&statuses=...&keyword=...
 GET    /api/schedules/{id}
 POST   /api/schedules
 PATCH  /api/schedules/{id}
 DELETE /api/schedules/{id}
-GET    /api/schedules/search?keyword=...
+
+GET    /api/staging
+PATCH  /api/staging/{id}
+POST   /api/staging/{id}/approve
+POST   /api/staging/{id}/reject
+POST   /api/staging/approve-all
+
+GET/POST /api/auto-sources/{github,gitee}/{status,sync}
 ```
 
 后端重点处理：
 
-- 所有查询必须按当前用户过滤
+- 所有查询和写入必须按当前用户过滤，其他账号的 ID 返回 404
 - 校验结束时间不能早于开始时间
 - 处理全天事件和跨天事件
-- 处理重复日程的展开
 - 统一错误格式，例如 400、401、404、409
-- 为开始时间和用户 ID 建立索引
+- 为开始时间、结束时间和用户 ID 建立索引
+- `/api/health` 额外返回当前生效的 `timezone`，便于部署后核对配置
 
 ## 7. Vue 前端
 
-建议按页面和模块拆分：
+当前目录结构：
 
 ```text
 src/
-  api/
+  api/            # axios 封装：auth、schedules、staging、auto-sources
   components/
-    calendar/
-    schedule/
+    agenda/ calendar/ common/ filters/ layout/
+    schedule/ search/ settings/ staging/
+  composables/    # useMediaQuery、useTheme
+  constants/      # 分类/状态颜色与工具类
+  router/         # /login、/register、/ 三个路由与登录守卫
+  stores/         # auth.ts、schedule.ts
+  styles/         # Tailwind @theme 设计令牌与第三方组件覆盖
+  types/ utils/ views/
   views/
     LoginView.vue
+    RegisterView.vue
     CalendarView.vue
-    SettingsView.vue
-  stores/
-    auth.ts
-    schedule.ts
-  router/
 ```
 
-前端实现顺序：
+实现状态：
 
-1. 登录页和路由守卫
-2. 日历月视图
-3. 创建日程表单
-4. 日程详情和编辑
-5. 日/周视图
-6. 搜索、筛选和标签
-7. 加载状态、空状态和错误提示
-8. 移动端适配
+1. 登录页和路由守卫 —— 已完成
+2. 日历月视图 —— 已完成
+3. 创建日程表单 —— 已完成
+4. 日程详情和编辑 —— 已完成
+5. 日/周视图 —— 已完成
+6. 搜索与筛选 —— 已完成；标签未实现
+7. 加载状态、空状态和错误提示 —— 已完成
+8. 移动端适配 —— 已完成
 
-FullCalendar 负责日历展示和日期交互，Pinia 管理登录状态及日程缓存，所有数据通过 API 获取。
+FullCalendar 负责日历展示和日期交互，Pinia 管理登录状态及日程数据，所有数据通过 API 获取。
 
-## 8. 提醒功能
+## 8. 提醒功能（未实现）
+
+提醒属于 P1，当前没有提醒表、后台任务或通知入口。下面是后续设计基线：
 
 先在数据库中保存提醒时间，然后由后端任务定期检查：
 
@@ -185,19 +194,24 @@ AND status = pending
 
 ## 9. 测试
 
-至少覆盖以下场景：
+当前已覆盖：
 
-- 注册、登录和未登录访问
+- 注册、登录、未登录访问和重复用户名
 - 日程创建、修改、删除
 - 创建时间范围非法
 - 跨天和全天日程
-- 重复日程展开
-- 不同时区展示
-- 提醒是否只发送一次
+- 分类、状态、关键词和日期范围筛选
 - 用户不能访问其他用户的数据
-- 前端创建和拖拽修改日程
+- `/api/health` 与 `APP_TIMEZONE` 时区校验、自动排程日期边界
+- 前端表单、日期工具、主题、状态管理与登录注册流程
 
-后端使用 pytest，前端组件使用 Vitest，完整流程使用 Playwright。
+待补充（依赖未实现功能）：
+
+- 重复日程展开
+- 提醒是否只发送一次
+- 拖拽修改日程
+
+后端使用 pytest，前端组件使用 Vitest，完整流程使用 Playwright。`make verify` 依次执行 Ruff、ESLint、Prettier、TypeScript、后端/前端测试和生产构建。
 
 ## 10. 部署与运维
 
@@ -220,6 +234,7 @@ Nginx（frontend 容器）
 - Docker Compose 一键启动：`make docker-up`，配置文件为根目录 `docker-compose.yml`
 - Alembic 数据库迁移：`backend/docker-entrypoint.sh` 在容器启动时执行 `alembic upgrade head`
 - 环境变量管理：复制根目录 `.env.example` 为 `.env`，至少设置 `JWT_SECRET`
+- 时区：`APP_TIMEZONE` 控制自动排程窗口，默认 `Asia/Shanghai`；Compose 同时传给容器 `TZ`，`/api/health` 可直接核对
 - 健康检查：后端 `/api/health`，Nginx `/healthz`，Compose 已配置 healthcheck
 - 日志记录：Uvicorn 输出到容器日志，Compose 限制单文件 10 MB、保留 3 个文件
 - 数据库备份：`make backup`，使用 SQLite 在线备份 API 写入 `backups/`
@@ -244,17 +259,17 @@ MVP 稳定后继续增加：
 
 ## 12. 推荐实施顺序
 
-整体按照以下顺序实施：
+整体按照以下顺序实施，括号内为当前状态：
 
-1. 确定需求和产品范围
-2. 完成页面原型
-3. 设计数据库
-4. 实现后端 CRUD
-5. 实现 Vue 日历界面
-6. 接入登录认证
-7. 实现提醒任务
-8. 补充自动化测试
-9. 部署并收集使用反馈
-10. 规划后续增强功能
+1. 确定需求和产品范围（已完成）
+2. 完成页面原型（已完成）
+3. 设计数据库（已完成，迁移 0001–0004）
+4. 实现后端 CRUD（已完成）
+5. 实现 Vue 日历界面（已完成）
+6. 接入登录认证（已完成）
+7. 实现提醒任务（未开始，P1）
+8. 补充自动化测试（持续进行）
+9. 部署并收集使用反馈（部署已完成，待一周试用）
+10. 规划后续增强功能（待办）
 
 一个人开发可用 MVP，通常需要约 2～4 周。加入完整重复规则、日历同步和移动端推送后，开发周期会相应增加。

@@ -154,7 +154,7 @@ web (Nginx)
 | --- | --- | --- |
 | `JWT_SECRET` | 是 | JWT 签名密钥，至少 32 字节；未设置时 Compose 会拒绝启动 |
 | `APP_PORT` | 否 | 宿主机端口，默认 `8080` |
-| `TZ` | 否 | 后端本地时区，默认 `Asia/Shanghai`，影响自动日程时间窗口 |
+| `APP_TIMEZONE` | 否 | 应用时区，默认 `Asia/Shanghai`，影响自动日程时间窗口 |
 | `AUTH_BOOTSTRAP_USERNAME` / `AUTH_BOOTSTRAP_PASSWORD` | 否 | 首次启动自动创建管理员 |
 | `ALLOW_REGISTRATION` | 否 | 是否开放注册，默认 `true` |
 | `GITHUB_*` / `GITEE_*` | 否 | 自动来源同步配置，含义与 `backend/.env.example` 一致 |
@@ -215,7 +215,7 @@ uv run uvicorn app.main:app --reload --port 8000
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/api/health` | 健康检查（含数据库连通性） |
+| GET | `/api/health` | 健康检查（含数据库连通性与当前应用时区） |
 | GET | `/api/auth/status` | 是否已创建管理员账号 |
 | POST | `/api/auth/setup` | 首次创建管理员账号 |
 | POST | `/api/auth/register` | 注册新账号（可通过环境变量关闭） |
@@ -273,6 +273,13 @@ curl -X POST http://127.0.0.1:8000/api/schedules \
 - 普通日程要求 `end_at > start_at`
 - 全天事件按日期保存：开始日 `00:00:00 UTC` 到结束日 `23:59:59.999999 UTC`，首尾日期都包含
 - 删除前二次确认、错误提示和空状态由前端负责；后端统一返回 `{"detail": "..."}`
+
+## 时区设置
+
+- `APP_TIMEZONE` 决定后端自动来源排程的“今天 09:00–22:00”窗口，默认 `Asia/Shanghai`；本地开发写入 `backend/.env`，Docker 部署写入根目录 `.env`
+- 启动时会校验时区名称，非法值（如 `Asia/Shanghia`）会直接导致进程启动失败；`/api/health` 返回当前生效的 `timezone`
+- 界面时间仍按浏览器本地时区展示。建议让 `APP_TIMEZONE` 与日常使用的浏览器时区保持一致，避免自动插入的时段看起来偏移
+- Compose 会把同一个值同时传给容器的 `APP_TIMEZONE` 和 `TZ`，容器日志时间与服务时区保持一致
 
 ## 测试与检查
 

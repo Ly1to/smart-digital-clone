@@ -2,7 +2,7 @@
 
 > 所属项目：个人日程系统  
 > 范围说明：这是 MVP 之外的增量能力，默认关闭，配置 GitHub 或 Gitee 后启用。  
-> 更新日期：2026-11-08
+> 更新日期：2026-11-20
 
 ## 1. 设计目标
 
@@ -79,6 +79,8 @@ Gitee 使用 v5 OpenAPI：
 AUTO_SCHEDULE_DURATION_MINUTES=30
 AUTO_SCHEDULE_DAY_START_HOUR=9
 AUTO_SCHEDULE_DAY_END_HOUR=22
+# 以上窗口按此时区计算，默认 Asia/Shanghai
+APP_TIMEZONE=Asia/Shanghai
 ```
 
 ## 5. API
@@ -108,9 +110,9 @@ POST   /api/auto-sources/gitee/sync
 - 一次 GitHub 同步按仓库汇总，不按单次 commit 建日程
 - 不支持双向回写 GitHub
 - 自动同步依赖后端进程持续运行；进程停止期间不会轮询
-- 时间窗口按后端本地时区计算，部署时建议设置正确的 `TZ`
+- 时间窗口按 `APP_TIMEZONE` 计算（默认 `Asia/Shanghai`），不依赖容器或宿主机 `TZ`
+- 界面仍按浏览器本地时区展示时间；两者不一致时，自动插入的时段会以浏览器时区的时刻呈现
 
-
-## 多账号行为
+## 8. 多账号行为
 
 后台自动同步任务归属于第一个创建的管理员账号。其他账号登录后手动点击同步时，会使用相同的全局来源配置，但暂存条目和生成的日程只属于当前账号。
