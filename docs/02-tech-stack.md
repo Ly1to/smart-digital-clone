@@ -149,7 +149,7 @@ FastAPI 提供 REST API 和自动生成的 OpenAPI 文档。Pydantic 模型负�
 
 ### 4.2 SQLAlchemy + Alembic
 
-使用 SQLAlchemy 2 的声明式模型管理日程数据，使用 Alembic 管理所有表结构变更。当前结构（迁移 `0001`–`0004`）：
+使用 SQLAlchemy 2 的声明式模型管理日程数据，使用 Alembic 管理所有表结构变更。当前结构（迁移 `0001`–`0005`）：
 
 ```text
 users
@@ -183,6 +183,14 @@ staged_schedules
 - 日程字段与建议时间
 - status（pending / approved / rejected）
 - schedule_id、approved_at
+
+qq_bindings
+- id
+- user_id（外键，级联删除）
+- platform（onebot）
+- external_id（QQ 号）
+- created_at
+- unique(platform, external_id)
 ```
 
 约束：
@@ -287,6 +295,7 @@ digital-clone/
       models/
       schemas/
       services/
+      bot/          # 对话助手与 QQ 接入
     tests/
   frontend/
     Dockerfile
@@ -331,6 +340,8 @@ digital-clone/
 - 首次创建管理员、注册、重复用户名、关闭注册
 - 不同账号只能访问自己的日程与暂存数据
 - `APP_TIMEZONE` 非法值校验与自动排程日期边界
+- 对话助手工具调用、未配置 Key、会话历史
+- QQ 绑定码、绑定冲突、私聊/群聊路由、白名单、分片发送
 
 ### 7.2 前端
 

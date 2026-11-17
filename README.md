@@ -4,6 +4,8 @@
 
 当前进度：**后端、数据库、登录、前端和 Docker/Nginx 部署已完成**，对话助手 Phase 1（DeepSeek + 只读日程工具）与 Phase 2（OneBot / QQ 接入、账号绑定）已完成。
 
+文档入口：[文档导航](./docs/README.md) · [API 参考](./docs/API.md) · [系统架构](./docs/ARCHITECTURE.md) · [部署运维](./docs/DEPLOYMENT.md) · [测试与质量](./docs/TESTING.md) · [路线图](./docs/ROADMAP.md)
+
 ## 目录
 
 ```text
@@ -41,7 +43,7 @@ digital-clone/
     tests/            # Vitest 单元与组件测试
     e2e/              # Playwright 主流程测试
   data/               # SQLite 数据文件（本地生成）
-  docs/               # 产品范围、技术栈、开发手册
+  docs/               # 文档导航、设计基线与 API/架构/部署/测试/路线图
 ```
 
 ## 功能
@@ -62,6 +64,8 @@ digital-clone/
 - 加载骨架、局部加载、空数据、筛选无结果和错误重试状态
 - 桌面三栏布局、平板收起侧栏、移动端今日议程与底部抽屉
 - 键盘支持 `N` 新建、`T` 回到今天、`/` 搜索、`Esc` 关闭
+- 对话助手：HTTP 调试入口 + QQ 私聊/群聊 @，支持查询、搜索、单条详情和按天汇总
+- QQ 账号绑定：网页生成一次性绑定码，私聊机器人发送绑定码完成绑定
 
 ## 界面方向
 
@@ -392,4 +396,6 @@ uv run alembic check
 
 ## 下一步
 
-完成一周实际试用并收集反馈。公网部署时再按实际入口补充 HTTPS、访问保护和定期备份任务。
+- 完成一周实际试用并收集反馈
+- 按 [路线图](./docs/ROADMAP.md) 推进 P1：提醒、重复日程、标签、ICS、QQ 写操作
+- 公网部署时按 [部署文档](./docs/DEPLOYMENT.md) 补充 HTTPS、访问保护和定期备份任务

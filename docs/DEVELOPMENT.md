@@ -76,7 +76,7 @@
 
 ## 5. 数据库设计
 
-当前结构由 Alembic 迁移 `0001`–`0004` 维护，完整字段见 [步骤二：确认技术栈](./02-tech-stack.md#42-sqlalchemy--alembic)，概要如下：
+当前结构由 Alembic 迁移 `0001`–`0005` 维护，完整字段见 [步骤二：确认技术栈](./02-tech-stack.md#42-sqlalchemy--alembic)，概要如下：
 
 ```text
 users
@@ -97,15 +97,23 @@ staged_schedules
 - status（pending / approved / rejected）
 - schedule_id、approved_at
 - created_at、updated_at
+
+qq_bindings
+- id、user_id（外键，级联删除）
+- platform（onebot）、external_id（QQ 号）
+- created_at
+- unique(platform, external_id)
 ```
 
 时间统一以 UTC 保存，前端按浏览器本地时区展示；后端自动排程窗口由 `APP_TIMEZONE` 决定。
+
+对话机器人相关代码在 `backend/app/bot/`，见 [系统架构](./ARCHITECTURE.md#34-对话助手)。
 
 tags、schedule_tags、recurrence_rule、remind_minutes 和 users.timezone 均未建立，避免为未实现功能预留含义不清的列；接入时通过新的 Alembic 迁移添加。
 
 ## 6. 后端 API
 
-当前路由（完整列表与示例见 [README](../README.md#api)）：
+当前路由（完整参数、响应与示例见 [API 参考](./API.md)）：
 
 ```text
 GET    /api/health
@@ -201,6 +209,8 @@ AND status = pending
 
 ## 9. 测试
 
+当前共 91 个后端测试、70 个前端测试、8 个 Playwright 流程，命令与覆盖范围见 [测试与质量](./TESTING.md)。
+
 当前已覆盖：
 
 - 注册、登录、未登录访问和重复用户名
@@ -210,6 +220,7 @@ AND status = pending
 - 分类、状态、关键词和日期范围筛选
 - 用户不能访问其他用户的数据
 - `/api/health` 与 `APP_TIMEZONE` 时区校验、自动排程日期边界
+- 对话助手工具调用、QQ 绑定码、私聊/群聊路由与白名单
 - 前端表单、日期工具、主题、状态管理与登录注册流程
 
 待补充（依赖未实现功能）：
@@ -247,7 +258,7 @@ Nginx（frontend 容器）
 - 数据库备份：`make backup`，使用 SQLite 在线备份 API 写入 `backups/`
 - HTTPS：默认由宿主机、云负载均衡或前置代理终止，再转发到 `APP_PORT`；如需在 Nginx 内终止，可挂载证书后扩展 `frontend/nginx.conf`
 
-完整命令、环境变量和恢复步骤见 [README 的 Docker 部署章节](../README.md#docker-部署)。
+完整命令、环境变量矩阵、备份恢复、HTTPS 和 QQ 部署见 [部署与运维](./DEPLOYMENT.md)。
 
 ## 11. 后续增强功能
 
@@ -271,13 +282,13 @@ MVP 稳定后继续增加：
 
 1. 确定需求和产品范围（已完成）
 2. 完成页面原型（已完成）
-3. 设计数据库（已完成，迁移 0001–0004）
+3. 设计数据库（已完成，迁移 0001–0005）
 4. 实现后端 CRUD（已完成）
 5. 实现 Vue 日历界面（已完成）
 6. 接入登录认证（已完成）
 7. 实现提醒任务（未开始，P1）
 8. 补充自动化测试（持续进行）
-9. 部署并收集使用反馈（部署已完成，待一周试用）
+9. 部署并收集使用反馈（部署已完成，试用中）
 10. 规划后续增强功能（待办）
 
 一个人开发可用 MVP，通常需要约 2～4 周。加入完整重复规则、日历同步和移动端推送后，开发周期会相应增加。

@@ -47,7 +47,7 @@ POST /api/auth/logout    # 客户端退出，需要 Token
 Authorization: Bearer <access_token>
 ```
 
-Token 为 HS256 JWT，默认有效期 7 天。
+Token 为 HS256 JWT，默认有效期 7 天。完整的请求与响应示例见 [API 参考](./API.md#4-认证)。
 
 ## 4. 前端行为
 
@@ -102,5 +102,5 @@ docker compose exec backend python -c "import sqlite3; c = sqlite3.connect('/app
 - 登录接口没有限流；公网部署建议在 Nginx 或反向代理层增加 HTTPS 和访问保护
 - JWT 无服务端会话表，退出登录是客户端清除 Token
 - 所有日程和暂存查询都按当前账号的 `user_id` 过滤，其他账号的 ID 会返回 404
-- 删除账号会级联删除该账号的日程和暂存数据
+- 删除账号会级联删除该账号的日程、暂存数据和 QQ 绑定
 - 密码不会通过 API 返回，数据库中只保存 scrypt 哈希
