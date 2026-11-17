@@ -41,11 +41,12 @@
 
 ### 3.1 整体气质
 
-- 背景像一张温暖、干净、没有明显纹理的日程纸
-- 信息层级依靠字号、留白和线条建立
+- 整体参考 [claude.com](https://claude.com) 的暖米色背景、近黑墨色和陶土红强调色
+- 背景像一张温暖、干净、没有明显纹理的日常纸面
+- 信息层级依靠字号、留白和线条建立，避免厚重描边和大面积色块
 - 内容表面接近纸白，不使用大面积纯白
-- 正文使用清晰的无衬线字体，月份和日期标题可以使用克制的衬线字体
-- 圆角适中，按钮和卡片不呈现明显的玻璃、渐变或拟物材质
+- 正文使用清晰的无衬线字体，月份、日期和卡片标题使用克制的衬线字体
+- 圆角适中，按钮使用药丸形，卡片和面板使用细边框加极轻阴影
 - 动效柔和、短促，只帮助用户理解界面状态变化
 
 ### 3.2 避免的视觉做法
@@ -63,25 +64,25 @@
 
 | Token | 色值 | 用途 |
 | --- | --- | --- |
-| `--color-canvas` | `#F4F0E7` | 页面最底层暖纸背景 |
-| `--color-surface` | `#FFFDF8` | 日历、侧栏、面板背景 |
-| `--color-surface-raised` | `#FFFBF2` | 弹窗、浮层和抬高表面 |
-| `--color-ink` | `#25231F` | 标题和主要文字 |
-| `--color-ink-secondary` | `#5F5A51` | 次级文字 |
-| `--color-ink-muted` | `#837C70` | 时间、占位符和辅助说明 |
-| `--color-line` | `#DFD7C8` | 网格线、分隔线和边框 |
-| `--color-line-strong` | `#C8BEAD` | 需要强调的边界 |
-| `--color-focus` | `#2F6F88` | 键盘焦点环和主要交互状态 |
-| `--color-danger` | `#A6473F` | 删除、错误和危险操作 |
-| `--color-success` | `#52705B` | 保存成功等非分类反馈 |
+| `--color-canvas` | `#F7F5EF` | 页面最底层暖米色背景 |
+| `--color-surface` | `#FFFEFB` | 日历、侧栏、面板背景 |
+| `--color-surface-raised` | `#FFFFFF` | 弹窗、浮层和抬高表面 |
+| `--color-ink` | `#141413` | 标题和主要文字 |
+| `--color-ink-secondary` | `#3F3E39` | 次级文字 |
+| `--color-ink-muted` | `#75726A` | 时间、占位符和辅助说明 |
+| `--color-line` | `#E7E2D7` | 网格线、分隔线和边框 |
+| `--color-line-strong` | `#D6CFC0` | 需要强调的边界 |
+| `--color-focus` | `#C96442` | 键盘焦点环和主要交互状态（陶土红） |
+| `--color-danger` | `#B4453C` | 删除、错误和危险操作 |
+| `--color-success` | `#55705C` | 保存成功等非分类反馈 |
 
 ### 4.2 分类颜色
 
 | 分类 | 主色 Token | 主色 | 柔和背景 | 辅助文字 |
 | --- | --- | --- | --- | --- |
-| 工作 | `--category-work` | `#356E84` | `#E7EFF2` | 青墨蓝 |
-| 外出 | `--category-outing` | `#BC6745` | `#F6E8E0` | 陶土橙 |
-| 私人时间 | `--category-private` | `#75608A` | `#EEE9F2` | 暮光紫 |
+| 工作 | `--color-work` | `#3F6C7D` | `#E9EFF1` | 青墨蓝 |
+| 外出 | `--color-outing` | `#C96442` | `#F9EDE6` | 陶土红 |
+| 私人时间 | `--color-private` | `#7B6690` | `#F0EBF5` | 暮光紫 |
 
 使用规则：
 
@@ -102,13 +103,19 @@
 
 状态颜色使用中性色或成功色，不能覆盖分类色。紧凑日历卡片可以只显示状态图标，完整状态文字放在详情和编辑表单中。
 
+### 4.4 主题切换
+
+- 提供青墨、苔绿、赭石三套强调色，默认使用赭石（陶土红 `#C96442`），最接近 claude.com 的视觉气质
+- 主题只改变 `--color-focus` 与 Element Plus 主色，不改动三类日程的固定分类色
+- 主题选择保存在 `localStorage`，刷新后继续生效
+
 ## 5. 字体与排版
 
 ### 5.1 字体
 
 ```css
---font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
---font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
+--font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+--font-display: "Noto Serif SC", "Songti SC", "Source Han Serif SC", Georgia, serif;
 ```
 
 - 正文、表单、按钮和日程标题使用 `--font-sans`
